@@ -1,0 +1,425 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+.room { max-width: 1000px; margin: 0 auto; padding: 1.25rem 1.5rem 3rem; }
+
+/* ── Top header bar ── */
+.race-header {
+    display: flex; align-items: center; justify-content: space-between;
+    background: #ffffff; border: 1px solid rgba(109,40,217,.2);
+    border-radius: 14px; padding: .7rem 1.25rem; margin-bottom: 1.25rem; flex-wrap: wrap; gap: .5rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,.04);
+}
+.race-title-bar {
+    display: flex; align-items: center; gap: .5rem;
+    font-family: 'Orbitron', sans-serif;
+}
+.race-flag { font-size: 1rem; }
+.race-status-text { font-size: .8rem; font-weight: 700; color: var(--accent3); letter-spacing: .08em; }
+.q-progress-bar {
+    display: flex; align-items: center; gap: .35rem;
+    flex: 1; justify-content: center;
+}
+.q-step {
+    width: 28px; height: 28px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Orbitron', sans-serif; font-size: .62rem; font-weight: 700;
+    transition: all .3s;
+}
+.q-step.done { background: var(--accent3); color: #fff; box-shadow: 0 0 8px rgba(22,163,74,.4); }
+.q-step.current { background: var(--amber); color: #fff; box-shadow: 0 0 10px rgba(180,83,9,.4); }
+.q-step.upcoming { background: rgba(0,0,0,.05); color: var(--text-dim); border: 1px solid rgba(0,0,0,.1); }
+.q-connector { width: 16px; height: 2px; background: rgba(0,0,0,.08); }
+.q-connector.done { background: var(--accent3); }
+.leave-btn {
+    background: rgba(220,38,38,.08); border: 1px solid rgba(220,38,38,.25);
+    color: #b91c1c; border-radius: 9px; padding: 6px 14px;
+    font-size: .75rem; font-weight: 600; cursor: pointer; transition: all .2s;
+    text-decoration: none; display: inline-flex; align-items: center; gap: .35rem;
+    font-family: 'Orbitron', sans-serif; letter-spacing: .04em;
+}
+.leave-btn:hover { background: rgba(220,38,38,.16); color: #991b1b; }
+
+/* ── Main layout ── */
+.race-body { display: grid; grid-template-columns: 200px 1fr 220px; gap: 1rem; }
+@media (max-width: 900px) { .race-body { grid-template-columns: 1fr; } .race-side-left,.race-side-right { display: none; } }
+
+/* ── Left sidebar ── */
+.rside { background: #ffffff; border: 1px solid rgba(109,40,217,.16); border-radius: 16px; padding: 1rem; display: flex; flex-direction: column; gap: .9rem; height: fit-content; box-shadow: 0 2px 10px rgba(0,0,0,.04); }
+.rside-label { font-family: 'Orbitron', sans-serif; font-size: .55rem; font-weight: 600; color: var(--text-dim); text-transform: uppercase; letter-spacing: .18em; margin-bottom: .35rem; }
+.meta-row { display: flex; align-items: center; gap: .5rem; font-size: .76rem; color: var(--text-dim); }
+.meta-icon { font-size: .9rem; flex-shrink: 0; }
+.meta-val { color: var(--text); font-weight: 600; font-size: .78rem; }
+
+/* Race tip box */
+.race-tip-box {
+    background: rgba(109,40,217,.05); border: 1px solid rgba(109,40,217,.2);
+    border-radius: 12px; padding: .85rem; font-size: .72rem; color: var(--text-dim); line-height: 1.6;
+}
+.race-tip-box strong { font-family: 'Orbitron', sans-serif; font-size: .6rem; color: #6d28d9; letter-spacing: .1em; display: block; margin-bottom: .4rem; }
+.tip-correct { color: var(--accent3); font-weight: 700; }
+.tip-wrong { color: var(--red); font-weight: 700; }
+
+/* ── Center: question ── */
+.q-center { display: flex; flex-direction: column; gap: .9rem; }
+.q-card {
+    background: #ffffff; border: 1px solid rgba(109,40,217,.2);
+    border-radius: 16px; padding: 1.4rem 1.5rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,.04);
+}
+.q-meta-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+.q-badge { background: rgba(109,40,217,.12); border: 1px solid rgba(109,40,217,.3); color: #6d28d9; border-radius: 8px; padding: 4px 12px; font-family: 'Orbitron', sans-serif; font-size: .65rem; font-weight: 700; letter-spacing: .06em; }
+.timer-row { display: flex; align-items: center; gap: .5rem; font-size: .78rem; color: var(--text-dim); }
+.timer-num { font-family: 'Orbitron', sans-serif; font-size: 1.3rem; font-weight: 900; color: var(--accent3); min-width: 2ch; }
+.timer-num.warn { color: var(--amber); }
+.timer-num.danger { color: var(--red); animation: pulse-danger .5s infinite alternate; }
+@keyframes pulse-danger { from{text-shadow:none} to{text-shadow:0 0 10px rgba(220,38,38,.5)} }
+.q-text { font-size: 1rem; font-weight: 600; color: var(--text); line-height: 1.6; }
+.q-code { background: #0d1526; border: 1px solid rgba(109,40,217,.2); border-radius: 9px; padding: .65rem .9rem; font-family: monospace; font-size: .95rem; color: #c4b5fd; margin-top: .65rem; display: inline-block; }
+
+/* Options grid (2x2) */
+.options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
+@media (max-width: 560px) { .options-grid { grid-template-columns: 1fr; } }
+.opt-btn {
+    background: rgba(109,40,217,.03); border: 2px solid rgba(109,40,217,.16);
+    border-radius: 13px; padding: .9rem 1.1rem; color: var(--text);
+    font-size: .9rem; font-family: 'Inter', sans-serif; cursor: pointer;
+    text-align: left; transition: all .2s;
+    display: flex; align-items: center; gap: .65rem;
+}
+.opt-btn:hover:not(:disabled) { border-color: #6d28d9; background: rgba(109,40,217,.08); color: var(--text); transform: translateY(-2px); box-shadow: 0 6px 16px rgba(109,40,217,.15); }
+.opt-btn:disabled { cursor: not-allowed; opacity: .6; }
+.opt-btn.correct  { border-color: var(--accent3) !important; background: rgba(22,163,74,.1) !important; color: #166534 !important; }
+.opt-btn.wrong    { border-color: var(--red) !important; background: rgba(220,38,38,.08) !important; color: #b91c1c !important; }
+.opt-btn.selected-pending { border-color: var(--amber); background: rgba(180,83,9,.08); color: #92400e; }
+.opt-letter {
+    width: 28px; height: 28px; border-radius: 7px;
+    background: rgba(109,40,217,.12); display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: .8rem; color: #6d28d9; flex-shrink: 0;
+}
+
+/* ── Race track ── */
+.track-card { background: #ffffff; border: 1px solid rgba(109,40,217,.18); border-radius: 16px; padding: 1.1rem 1.25rem; box-shadow: 0 2px 10px rgba(0,0,0,.04); }
+.track-card-title { font-family: 'Orbitron', sans-serif; font-size: .6rem; font-weight: 700; color: #6d28d9; text-transform: uppercase; letter-spacing: .1em; margin-bottom: .9rem; display: flex; align-items: center; gap: .4rem; }
+.legend { margin-left: auto; display: flex; align-items: center; gap: .65rem; font-size: .65rem; color: var(--text-dim); font-family: 'Inter', sans-serif; font-weight: 400; text-transform: none; letter-spacing: 0; }
+.legend-dot { width: 9px; height: 9px; border-radius: 2px; }
+
+.racer-row { margin-bottom: .85rem; }
+.racer-row:last-child { margin-bottom: 0; }
+.racer-meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: .35rem; font-size: .8rem; }
+.racer-name { color: #6d28d9; font-weight: 600; }
+.racer-score { font-family: 'Orbitron', sans-serif; font-weight: 800; color: var(--amber); font-size: .9rem; }
+.track-bg { background: var(--surface2); border-radius: 100px; height: 22px; position: relative; border: 1px solid rgba(0,0,0,.06); overflow: visible; }
+.track-fill {
+    height: 100%; border-radius: 100px; transition: width .6s cubic-bezier(.34,1.56,.64,1);
+    min-width: 22px; display: flex; align-items: center; justify-content: flex-end; padding-right: 3px;
+    position: relative;
+}
+.track-p1 { background: linear-gradient(90deg, #6d28d9, #a78bfa); box-shadow: 0 0 8px rgba(109,40,217,.4); }
+.track-p2 { background: linear-gradient(90deg, #16a34a, #4ade80); box-shadow: 0 0 8px rgba(22,163,74,.4); }
+.car { font-size: 1rem; filter: drop-shadow(0 1px 2px rgba(0,0,0,.3)); }
+.track-markers { display: flex; justify-content: space-between; padding: 0 4px; margin-top: 3px; }
+.track-marker { font-family: 'Orbitron', sans-serif; font-size: .55rem; color: var(--text-dim); }
+
+/* ── Right sidebar ── */
+.rside-right { display: flex; flex-direction: column; gap: .9rem; }
+
+/* Leaderboard */
+.lb-row { display: flex; align-items: center; gap: .6rem; padding: .4rem .5rem; border-radius: 8px; font-size: .78rem; }
+.lb-row.lb-1 { background: rgba(245,158,11,.08); }
+.lb-num { font-family: 'Orbitron', sans-serif; font-size: .65rem; font-weight: 700; color: var(--text-dim); width: 14px; }
+.lb-car { font-size: .85rem; }
+.lb-name { flex: 1; font-weight: 600; color: var(--text); }
+.lb-pct { font-family: 'Orbitron', sans-serif; font-size: .75rem; font-weight: 700; color: var(--accent3); }
+
+/* Race stats */
+.stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .4rem; }
+.rstat { background: var(--surface2); border-radius: 8px; padding: .45rem .6rem; }
+.rstat-l { font-size: .62rem; color: var(--text-dim); }
+.rstat-v { font-family: 'Orbitron', sans-serif; font-size: .78rem; font-weight: 700; color: var(--text); }
+
+/* Feedback toast */
+.feedback-toast {
+    position: fixed; top: 72px; left: 50%;
+    transform: translateX(-50%) translateY(-20px);
+    background: rgba(16,163,127,.95); color: white;
+    padding: .65rem 2rem; border-radius: 100px; font-weight: 700; font-size: .95rem;
+    opacity: 0; transition: all .3s; z-index: 1000; pointer-events: none;
+    font-family: 'Orbitron', sans-serif; letter-spacing: .05em;
+}
+.feedback-toast.wrong-t { background: rgba(220,38,38,.95); }
+.feedback-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* Events bar */
+.events-bar {
+    background: #ffffff; border: 1px solid rgba(109,40,217,.14);
+    border-radius: 12px; padding: .6rem 1.1rem; margin-top: 1rem;
+    display: flex; align-items: center; gap: 1.5rem; font-size: .74rem; flex-wrap: wrap;
+    box-shadow: 0 2px 10px rgba(0,0,0,.04);
+}
+.events-label { font-family: 'Orbitron', sans-serif; font-size: .58rem; font-weight: 700; color: var(--text-dim); letter-spacing: .12em; text-transform: uppercase; flex-shrink: 0; }
+.event-item { display: flex; align-items: center; gap: .35rem; color: var(--text-dim); }
+.event-correct { color: var(--accent3); }
+.event-wrong { color: var(--red); }
+
+/* Waiting card */
+.waiting-card {
+    background: #ffffff; border: 1px solid rgba(109,40,217,.25);
+    border-radius: 22px; padding: 3rem 2rem; text-align: center;
+    margin: 2rem auto; max-width: 460px; box-shadow: 0 10px 40px rgba(109,40,217,.1);
+}
+.room-code-big {
+    font-family: 'Orbitron', sans-serif; font-size: 2.5rem; font-weight: 900;
+    letter-spacing: .2em; background: linear-gradient(135deg, #6d28d9, var(--amber));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    border: 2px solid rgba(109,40,217,.3); border-radius: 14px; padding: .8rem 1.5rem;
+    display: inline-block; margin: .75rem 0; cursor: pointer;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.spinner { width: 38px; height: 38px; border: 3px solid rgba(109,40,217,.15); border-top-color: #6d28d9; border-radius: 50%; animation: spin 1s linear infinite; margin: .85rem auto; }
+</style>
+
+<div class="room">
+
+{% if battle.status == 'waiting' %}
+<!-- ── Waiting ── -->
+<div id="feedback-toast" class="feedback-toast"></div>
+<div class="waiting-card">
+    <div style="font-size:3rem">⚡</div>
+    <h2 style="font-family:'Orbitron',sans-serif;font-size:1.2rem;font-weight:800;color:var(--text);margin:.5rem 0;letter-spacing:.05em">WAITING FOR OPPONENT</h2>
+    <p style="color:var(--text-dim);font-size:.85rem">Share this room code with your opponent:</p>
+    <div class="room-code-big" onclick="copyCode()" title="Click to copy">{{ battle.room_code }}</div>
+    <p style="color:var(--text-dim);font-size:.72rem"><i class="fas fa-copy" style="margin-right:.3rem"></i>Click code to copy</p>
+    <div class="spinner"></div>
+    <p style="color:var(--text-dim);font-size:.8rem">Auto-refreshing every 3 seconds...</p>
+    <div style="margin-top:1.25rem;padding-top:1.25rem;border-top:1px solid rgba(0,0,0,.08)">
+        <div style="color:#6d28d9;font-size:.82rem;font-weight:600;font-family:'Orbitron',sans-serif;letter-spacing:.05em">Topic: {{ battle.topic }}</div>
+        <div style="color:var(--text-dim);font-size:.72rem;margin-top:.25rem">10 questions · 15 seconds each</div>
+    </div>
+</div>
+<script>
+function copyCode(){ navigator.clipboard.writeText('{{ battle.room_code }}').then(()=>{ const el=document.querySelector('.room-code-big'); const orig=el.style.borderColor; el.style.borderColor='rgba(34,197,94,.6)'; setTimeout(()=>el.style.borderColor=orig,800); }); }
+setInterval(()=>{ fetch('/quiz/status/{{ battle.room_code }}').then(r=>r.json()).then(d=>{ if(d.status==='active'||d.status==='finished') location.reload(); }); },3000);
+</script>
+
+{% elif battle.status == 'active' and current_question %}
+<!-- ── Race in progress ── -->
+<div id="feedback-toast" class="feedback-toast"></div>
+
+<!-- Top header with progress nodes -->
+<div class="race-header">
+    <div class="race-title-bar">
+        <span class="race-flag">🏁</span>
+        <span class="race-status-text">RACE IN PROGRESS</span>
+        <span class="race-flag">🏁</span>
+    </div>
+    <div class="q-progress-bar">
+        {% for i in range(total_q) %}
+        <div class="q-step {% if i < q_index %}done{% elif i == q_index %}current{% else %}upcoming{% endif %}">{{ i+1 }}</div>
+        {% if not loop.last %}<div class="q-connector {% if i < q_index %}done{% endif %}"></div>{% endif %}
+        {% endfor %}
+    </div>
+    <a href="/quiz/lobby" class="leave-btn"><i class="fas fa-times"></i> LEAVE</a>
+</div>
+
+<!-- 3-col layout -->
+<div class="race-body">
+
+    <!-- Left meta -->
+    <div class="rside race-side-left">
+        <div>
+            <div class="rside-label">Race Mode</div>
+            <div class="meta-row"><span class="meta-icon">👥</span><span class="meta-val">Team Battle</span></div>
+        </div>
+        <div>
+            <div class="rside-label">Topic</div>
+            <div class="meta-row"><span class="meta-icon">🐍</span><span class="meta-val">{{ battle.topic }}</span></div>
+        </div>
+        <div>
+            <div class="rside-label">Questions</div>
+            <div class="meta-row"><span class="meta-icon">📋</span><span class="meta-val">{{ q_index + 1 }} / {{ total_q }}</span></div>
+        </div>
+        <div>
+            <div class="rside-label">Checkpoint</div>
+            <div class="meta-row"><span class="meta-icon">🏁</span><span class="meta-val">Next at 10</span></div>
+        </div>
+        <div class="race-tip-box">
+            <strong>⚡ RACE TIP</strong>
+            Correct answer = <span class="tip-correct">Move Forward</span><br>
+            Wrong answer = <span class="tip-wrong">Move Back</span>
+        </div>
+    </div>
+
+    <!-- Center: question + options + track -->
+    <div class="q-center">
+        <!-- Question card -->
+        <div class="q-card">
+            <div class="q-meta-row">
+                <span class="q-badge">QUESTION {{ q_index + 1 }}</span>
+                <div class="timer-row">
+                    <i class="fas fa-clock" style="font-size:.7rem"></i> TIME LEFT
+                    <span class="timer-num" id="timer-num">15</span> sec
+                </div>
+            </div>
+            <div class="q-text">{{ current_question.question }}</div>
+        </div>
+
+        <!-- Options -->
+        <div class="options-grid" id="options-grid">
+            <button class="opt-btn" id="opt-A" onclick="submitAnswer('A')"><span class="opt-letter">A</span> {{ current_question.option_a }}</button>
+            <button class="opt-btn" id="opt-B" onclick="submitAnswer('B')"><span class="opt-letter">B</span> {{ current_question.option_b }}</button>
+            <button class="opt-btn" id="opt-C" onclick="submitAnswer('C')"><span class="opt-letter">C</span> {{ current_question.option_c }}</button>
+            <button class="opt-btn" id="opt-D" onclick="submitAnswer('D')"><span class="opt-letter">D</span> {{ current_question.option_d }}</button>
+        </div>
+
+        <!-- Race track -->
+        <div class="track-card">
+            <div class="track-card-title">
+                <i class="fas fa-flag-checkered"></i> LIVE RACE TRACK
+                <div class="legend">
+                    <span style="display:flex;align-items:center;gap:.3rem"><span class="legend-dot" style="background:var(--accent3)"></span>Correct (+)</span>
+                    <span style="display:flex;align-items:center;gap:.3rem"><span class="legend-dot" style="background:var(--red)"></span>Wrong (−)</span>
+                </div>
+            </div>
+
+            <div class="racer-row">
+                <div class="racer-meta">
+                    <span class="racer-name">{{ p1.name }}{% if current_uid == battle.player1_id %} <span style="font-size:.68rem;color:var(--accent2)">(You)</span>{% endif %}</span>
+                    <span class="racer-score" id="p1-score">{{ p1_score }}/{{ total_q }}</span>
+                </div>
+                <div class="track-bg">
+                    <div class="track-fill track-p1" id="p1-track" style="width:{{ [(p1_score / total_q * 100), 5]|max }}%">
+                        <span class="car">🚀</span>
+                    </div>
+                </div>
+                <div class="track-markers"><span>5</span><span>10</span><span>15</span><span>20</span></div>
+            </div>
+
+            <div class="racer-row">
+                <div class="racer-meta">
+                    <span class="racer-name" style="color:#15803d">{{ p2.name if p2 else 'Opponent' }}{% if current_uid == battle.player2_id %} <span style="font-size:.68rem;color:#16a34a">(You)</span>{% endif %}</span>
+                    <span class="racer-score" id="p2-score">{{ p2_score }}/{{ total_q }}</span>
+                </div>
+                <div class="track-bg">
+                    <div class="track-fill track-p2" id="p2-track" style="width:{{ [(p2_score / total_q * 100), 5]|max }}%">
+                        <span class="car">🏎️</span>
+                    </div>
+                </div>
+                <div class="track-markers"><span>5</span><span>10</span><span>15</span><span>20</span></div>
+            </div>
+        </div>
+
+        <!-- Events bar -->
+        <div class="events-bar" id="events-bar">
+            <span class="events-label">Recent Events</span>
+            <span class="event-item" id="event1" style="display:none"></span>
+            <span class="event-item" id="event2" style="display:none"></span>
+        </div>
+    </div>
+
+    <!-- Right: leaderboard + stats -->
+    <div class="rside rside-right race-side-right">
+        <div>
+            <div class="rside-label"><i class="fas fa-trophy" style="color:var(--amber);margin-right:.3rem"></i> Leaderboard</div>
+            <div class="lb-row lb-1">
+                <span class="lb-num">1</span><span class="lb-car">🚀</span>
+                <span class="lb-name" id="lb1-name">{{ p1.name }}</span>
+                <span class="lb-pct" id="lb1-pct">{{ (p1_score / total_q * 100)|int }}%</span>
+            </div>
+            <div class="lb-row" style="margin-top:.3rem">
+                <span class="lb-num">2</span><span class="lb-car">🏎️</span>
+                <span class="lb-name" id="lb2-name">{{ p2.name if p2 else 'Opponent' }}</span>
+                <span class="lb-pct" id="lb2-pct" style="color:var(--amber)">{{ (p2_score / total_q * 100)|int }}%</span>
+            </div>
+        </div>
+        <div>
+            <div class="rside-label"><i class="fas fa-bolt" style="color:var(--amber);margin-right:.3rem"></i> Race Stats</div>
+            <div class="stats-grid">
+                <div class="rstat"><div class="rstat-l">🔥 Streak</div><div class="rstat-v" id="stat-streak">0</div></div>
+                <div class="rstat"><div class="rstat-l">🎯 Accuracy</div><div class="rstat-v" id="stat-acc">0%</div></div>
+                <div class="rstat"><div class="rstat-l">✅ Correct</div><div class="rstat-v" id="stat-correct">0</div></div>
+                <div class="rstat"><div class="rstat-l">❌ Wrong</div><div class="rstat-v" id="stat-wrong">0</div></div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+let timeLeft=15, timerInterval, answered=false, startTime=Date.now();
+let correctCount=0, wrongCount=0, streak=0;
+const totalQ={{ total_q }}, qIndex={{ q_index }}, roomCode='{{ battle.room_code }}';
+const p1Id={{ battle.player1_id }}, p2Id={{ battle.player2_id or 0 }}, currentUid={{ current_uid }};
+
+function updateTimer(){
+    const el=document.getElementById('timer-num');
+    el.textContent=timeLeft; el.className='timer-num';
+    if(timeLeft<=5) el.classList.add('danger');
+    else if(timeLeft<=10) el.classList.add('warn');
+    if(timeLeft<=0){ clearInterval(timerInterval); if(!answered) submitAnswer(''); }
+    timeLeft--;
+}
+timerInterval=setInterval(updateTimer,1000); updateTimer();
+
+function showFeedback(correct){
+    const t=document.getElementById('feedback-toast');
+    t.textContent=correct?'✓ CORRECT! +1':'✗ WRONG!';
+    t.className='feedback-toast'+(correct?'':' wrong-t')+' show';
+    setTimeout(()=>t.classList.remove('show'),1500);
+}
+function addEvent(msg,correct){
+    const e1=document.getElementById('event1'),e2=document.getElementById('event2');
+    e2.innerHTML=e1.innerHTML; e2.style.display=e1.innerHTML?'flex':'none';
+    e2.className='event-item '+(correct?'event-correct':'event-wrong');
+    e1.innerHTML=(correct?'<i class="fas fa-check-circle"></i>':'<i class="fas fa-times-circle"></i>')+' '+msg;
+    e1.style.display='flex'; e1.className='event-item '+(correct?'event-correct':'event-wrong');
+}
+function updateStats(){
+    document.getElementById('stat-correct').textContent=correctCount;
+    document.getElementById('stat-wrong').textContent=wrongCount;
+    document.getElementById('stat-streak').textContent=streak;
+    const total=correctCount+wrongCount;
+    document.getElementById('stat-acc').textContent=total>0?Math.round(correctCount/total*100)+'%':'0%';
+}
+function submitAnswer(selected){
+    if(answered) return; answered=true; clearInterval(timerInterval);
+    document.querySelectorAll('.opt-btn').forEach(b=>b.disabled=true);
+    const timeTaken=(Date.now()-startTime)/1000;
+    if(selected){ const b=document.getElementById('opt-'+selected); if(b) b.classList.add('selected-pending'); }
+    fetch('/quiz/answer/'+roomCode,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question_index:qIndex,selected:selected,time_taken:timeTaken})})
+    .then(r=>r.json())
+    .then(data=>{
+        showFeedback(data.correct);
+        ['A','B','C','D'].forEach(o=>{ const b=document.getElementById('opt-'+o); if(b) b.classList.remove('selected-pending'); });
+        if(selected){ const b=document.getElementById('opt-'+selected); if(b) b.classList.add(data.correct?'correct':'wrong'); }
+        if(data.correct){ correctCount++; streak++; } else { wrongCount++; streak=0; }
+        updateStats();
+        const pName=currentUid===p1Id?'{{ p1.name }}':'{{ p2.name if p2 else "You" }}';
+        addEvent(pName+' answered '+(data.correct?'correctly':'incorrectly'), data.correct);
+        setTimeout(()=>{ if(data.done||data.redirect) window.location.href='/quiz/result/'+roomCode; else window.location.href='/quiz/room/'+roomCode; },1300);
+    });
+}
+setInterval(()=>{
+    fetch('/quiz/status/'+roomCode).then(r=>r.json()).then(d=>{
+        const p1s=d.p1_score||0,p2s=d.p2_score||0;
+        document.getElementById('p1-score').textContent=p1s+'/'+totalQ;
+        document.getElementById('p2-score').textContent=p2s+'/'+totalQ;
+        document.getElementById('p1-track').style.width=Math.max(p1s/totalQ*100,5)+'%';
+        document.getElementById('p2-track').style.width=Math.max(p2s/totalQ*100,5)+'%';
+        document.getElementById('lb1-pct').textContent=Math.round(p1s/totalQ*100)+'%';
+        document.getElementById('lb2-pct').textContent=Math.round(p2s/totalQ*100)+'%';
+        if(d.status==='finished'&&answered) setTimeout(()=>window.location.href='/quiz/result/'+roomCode,1000);
+    });
+},2000);
+</script>
+
+{% else %}
+<div style="margin:3rem auto;max-width:400px;text-align:center">
+    <div style="font-size:3rem;margin-bottom:.75rem">🏁</div>
+    <h2 style="font-family:'Orbitron',sans-serif;color:var(--text);margin-bottom:1rem;font-size:1.1rem;letter-spacing:.05em">BATTLE OVER!</h2>
+    <a href="/quiz/result/{{ battle.room_code }}" style="display:inline-block;background:linear-gradient(135deg,#6d28d9,var(--amber));color:white;border-radius:13px;padding:12px 32px;font-family:'Orbitron',sans-serif;font-weight:700;font-size:.8rem;letter-spacing:.05em;text-decoration:none">SEE RESULTS</a>
+</div>
+{% endif %}
+
+</div>
+{% endblock %}

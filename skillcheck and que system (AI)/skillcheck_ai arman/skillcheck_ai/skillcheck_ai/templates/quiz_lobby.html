@@ -1,0 +1,227 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+.lobby { max-width: 1100px; margin: 0 auto; padding: 1.75rem 1.75rem 3rem; }
+
+/* ── Stats bar (like screenshot 2 welcome bar) ── */
+.stats-bar {
+    background: linear-gradient(135deg, #f7f3ff, #fdf4ff);
+    border: 1px solid rgba(109,40,217,.2); border-radius: 18px;
+    padding: 1.25rem 1.5rem; margin-bottom: 1.75rem;
+    display: flex; align-items: center; gap: 1.25rem; flex-wrap: wrap;
+}
+.stats-avatar {
+    width: 52px; height: 52px; border-radius: 50%;
+    background: linear-gradient(135deg, #6d28d9, #b45309);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.5rem; flex-shrink: 0;
+    box-shadow: 0 0 16px rgba(109,40,217,.25);
+}
+.stats-name { font-family: 'Orbitron', sans-serif; font-size: 1.1rem; font-weight: 800; color: var(--text); }
+.stats-title { font-size: .72rem; color: #6d28d9; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; }
+.stats-divider { width: 1px; height: 36px; background: rgba(0,0,0,.08); flex-shrink: 0; }
+.stat-pill { display: flex; flex-direction: column; align-items: center; min-width: 58px; }
+.stat-v { font-family: 'Orbitron', sans-serif; font-size: 1.2rem; font-weight: 800; line-height: 1; }
+.stat-l { font-size: .62rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: .05em; margin-top: 2px; }
+.stat-xp .stat-v { color: var(--amber); }
+.stat-wins .stat-v { color: var(--accent3); }
+.stat-loss .stat-v { color: var(--red); }
+.stat-rate .stat-v { color: var(--accent); }
+.stats-logout { margin-left: auto; color: #b91c1c; font-size: .8rem; text-decoration: none; display: flex; align-items: center; gap: .35rem; }
+.stats-logout:hover { color: #991b1b; }
+
+/* ── Grid ── */
+.lobby-grid { display: grid; grid-template-columns: 1fr 1.6fr; gap: 1.25rem; }
+@media (max-width: 768px) { .lobby-grid { grid-template-columns: 1fr; } }
+
+/* ── Cards ── */
+.lcard {
+    background: #ffffff; border: 1px solid rgba(109,40,217,.16);
+    border-radius: 18px; padding: 1.5rem;
+    box-shadow: 0 2px 12px rgba(0,0,0,.04);
+}
+.lcard-title {
+    font-family: 'Orbitron', sans-serif; font-size: .65rem; font-weight: 700;
+    color: #6d28d9; text-transform: uppercase; letter-spacing: .12em;
+    margin-bottom: 1.1rem; display: flex; align-items: center; gap: .45rem;
+}
+
+/* topic select */
+.topic-sel {
+    width: 100%; background: rgba(109,40,217,.04); border: 1px solid rgba(109,40,217,.25);
+    border-radius: 11px; color: var(--text); padding: .8rem 1rem;
+    font-family: 'Inter', sans-serif; font-size: .9rem; appearance: none; cursor: pointer;
+    margin-bottom: .85rem;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236d28d9' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 1rem center;
+}
+.topic-sel:focus { outline: none; border-color: var(--accent2); box-shadow: 0 0 0 3px rgba(109,40,217,.12); }
+.topic-sel option { background: #ffffff; color: var(--text); }
+
+.hint-text { font-size: .73rem; color: var(--text-dim); margin-bottom: .85rem; line-height: 1.5; display: flex; align-items: flex-start; gap: .4rem; }
+.create-btn {
+    width: 100%; background: linear-gradient(135deg, #6d28d9, var(--amber));
+    border: none; color: white; border-radius: 11px; padding: 11px;
+    font-family: 'Orbitron', sans-serif; font-weight: 700; font-size: .78rem;
+    letter-spacing: .05em; cursor: pointer; transition: all .3s;
+}
+.create-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(109,40,217,.3); }
+.section-divider { margin: 1.2rem 0; border: none; border-top: 1px solid rgba(0,0,0,.08); }
+.code-row { display: flex; gap: .5rem; }
+.code-input {
+    flex: 1; background: rgba(109,40,217,.04); border: 1px solid rgba(109,40,217,.22);
+    border-radius: 10px; color: var(--text); padding: .72rem 1rem;
+    font-family: 'Orbitron', sans-serif; font-size: 1rem; letter-spacing: .12em; text-transform: uppercase;
+}
+.code-input:focus { outline: none; border-color: var(--accent2); }
+.code-input::placeholder { color: var(--text-dim); font-size: .75rem; font-family: 'Inter',sans-serif; text-transform: none; letter-spacing: 0; }
+.icon-btn {
+    background: linear-gradient(135deg, #6d28d9, #0072c6);
+    border: none; color: white; border-radius: 10px; padding: .72rem 1.1rem;
+    font-size: 1rem; cursor: pointer; transition: all .2s;
+}
+.icon-btn:hover { box-shadow: 0 6px 16px rgba(109,40,217,.3); }
+
+/* battle list */
+.battle-list { display: flex; flex-direction: column; gap: .65rem; }
+.battle-item {
+    background: rgba(109,40,217,.04); border: 1px solid rgba(109,40,217,.16);
+    border-radius: 13px; padding: .9rem 1.1rem;
+    display: flex; align-items: center; gap: .9rem;
+    transition: border-color .2s;
+}
+.battle-item:hover { border-color: rgba(109,40,217,.4); }
+.b-code { font-family: 'Orbitron', sans-serif; font-size: .95rem; font-weight: 800; color: #6d28d9; background: rgba(109,40,217,.1); border-radius: 7px; padding: 3px 9px; letter-spacing: .1em; }
+.b-info { flex: 1; }
+.b-host { font-size: .85rem; font-weight: 600; color: var(--text); }
+.b-topic { font-size: .72rem; color: #6d28d9; margin-top: 1px; }
+.join-btn {
+    background: linear-gradient(135deg, #6d28d9, #0072c6); border: none;
+    color: white; border-radius: 9px; padding: 7px 16px;
+    font-family: 'Orbitron', sans-serif; font-weight: 700; font-size: .68rem;
+    letter-spacing: .04em; cursor: pointer; transition: all .2s; text-decoration: none; display: inline-block;
+}
+.join-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(109,40,217,.3); color: white; }
+.no-battles { text-align: center; color: var(--text-dim); padding: 2rem; }
+.no-battles i { font-size: 2rem; display: block; margin-bottom: .65rem; }
+.refresh-btn {
+    width: 100%; margin-top: .85rem; background: transparent;
+    border: 1px solid rgba(0,0,0,.1); color: var(--text-dim);
+    border-radius: 9px; padding: 7px; font-size: .75rem; cursor: pointer;
+    transition: all .2s; font-family: 'Inter', sans-serif;
+}
+.refresh-btn:hover { border-color: rgba(109,40,217,.3); color: #6d28d9; }
+
+/* how to play */
+.how-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: .9rem; margin-top: .25rem; }
+.how-item {
+    background: var(--surface2); border: 1px solid rgba(0,0,0,.06);
+    border-radius: 13px; padding: 1.1rem; text-align: center;
+}
+.how-num { font-family: 'Orbitron', sans-serif; font-size: 1.6rem; font-weight: 900; background: linear-gradient(135deg, #6d28d9, var(--amber)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; line-height: 1; margin-bottom: .4rem; }
+.how-text { font-size: .75rem; color: var(--text-dim); line-height: 1.5; }
+.how-text strong { color: #6d28d9; display: block; margin-bottom: .15rem; }
+
+@keyframes neon-pulse {
+    0%,100% { box-shadow: 0 0 12px rgba(109,40,217,.1); }
+    50%      { box-shadow: 0 0 24px rgba(109,40,217,.2); }
+}
+.lcard-create { animation: neon-pulse 3s infinite; }
+</style>
+
+<div class="lobby">
+
+    <!-- Stats bar -->
+    <div class="stats-bar">
+        <div class="stats-avatar">⚡</div>
+        <div>
+            <div class="stats-name">{{ user.name }}</div>
+            <div class="stats-title">
+                {% if user.wins >= 20 %}Legendary{% elif user.wins >= 10 %}Expert{% elif user.wins >= 5 %}Challenger{% else %}Rookie{% endif %}
+            </div>
+        </div>
+        <div class="stats-divider"></div>
+        <div class="stat-pill stat-xp"><div class="stat-v">{{ user.xp or 0 }}</div><div class="stat-l">XP</div></div>
+        <div class="stat-pill stat-wins"><div class="stat-v">{{ user.wins or 0 }}</div><div class="stat-l">Wins</div></div>
+        <div class="stat-pill stat-loss"><div class="stat-v">{{ user.losses or 0 }}</div><div class="stat-l">Losses</div></div>
+        <div class="stat-pill stat-rate"><div class="stat-v">{{ win_rate }}%</div><div class="stat-l">Win Rate</div></div>
+        <a href="/quiz/logout" class="stats-logout"><i class="fas fa-sign-out-alt"></i> Logout</a>
+    </div>
+
+    <!-- Main grid -->
+    <div class="lobby-grid">
+
+        <!-- Create battle -->
+        <div class="lcard lcard-create">
+            <div class="lcard-title"><i class="fas fa-plus-circle"></i> Create Battle</div>
+            <form method="POST" action="/quiz/create">
+                <div style="font-size:.72rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.4rem;font-weight:600">Select Topic</div>
+                <select name="topic" class="topic-sel" required>
+                    <option value="" disabled selected>Choose a topic...</option>
+                    {% for topic in topics %}
+                    <option value="{{ topic }}">{{ topic }}</option>
+                    {% endfor %}
+                </select>
+                <div class="hint-text"><i class="fas fa-info-circle" style="color:#6d28d9;flex-shrink:0;margin-top:1px"></i> You'll get a room code to share. Battle starts when your opponent joins!</div>
+                <button type="submit" class="create-btn"><i class="fas fa-gamepad" style="margin-right:.4rem"></i>CREATE BATTLE ROOM</button>
+            </form>
+
+            <hr class="section-divider">
+
+            <div class="lcard-title" style="margin-bottom:.75rem"><i class="fas fa-key"></i> Join by Code</div>
+            <div class="code-row">
+                <input id="manual-code" type="text" placeholder="Enter room code..." maxlength="6" class="code-input" oninput="this.value=this.value.toUpperCase()">
+                <button type="button" onclick="joinByCode()" class="icon-btn"><i class="fas fa-bolt"></i></button>
+            </div>
+        </div>
+
+        <!-- Open battles -->
+        <div class="lcard">
+            <div class="lcard-title">
+                <i class="fas fa-fire"></i> Open Battles
+                <span style="margin-left:auto;font-size:.68rem;color:var(--text-dim);font-family:'Inter',sans-serif;font-weight:400;letter-spacing:0;text-transform:none">{{ open_battles|length }} available</span>
+            </div>
+            <div class="battle-list">
+                {% if open_battles %}
+                    {% for b in open_battles %}
+                    <div class="battle-item">
+                        <div class="b-code">{{ b.room_code }}</div>
+                        <div class="b-info">
+                            <div class="b-host">{{ battle_hosts[b.id] }}</div>
+                            <div class="b-topic"><i class="fas fa-tag" style="margin-right:.3rem"></i>{{ b.topic }}</div>
+                        </div>
+                        <form method="POST" action="/quiz/join/{{ b.room_code }}" style="margin:0">
+                            <button type="submit" class="join-btn"><i class="fas fa-bolt" style="margin-right:.3rem"></i>JOIN</button>
+                        </form>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                <div class="no-battles"><i class="fas fa-ghost"></i>No open battles right now.<br>Create one and invite a friend!</div>
+                {% endif %}
+            </div>
+            <button onclick="location.reload()" class="refresh-btn"><i class="fas fa-sync-alt" style="margin-right:.35rem"></i>Refresh List</button>
+        </div>
+    </div>
+
+    <!-- How to Play -->
+    <div class="lcard" style="margin-top:1.25rem">
+        <div class="lcard-title"><i class="fas fa-question-circle"></i> How to Play</div>
+        <div class="how-grid">
+            <div class="how-item"><div class="how-num">1</div><div class="how-text"><strong>Create a Room</strong>Select a topic and create a battle room to get your code.</div></div>
+            <div class="how-item"><div class="how-num">2</div><div class="how-text"><strong>Share Code</strong>Share the 6-character room code with your opponent.</div></div>
+            <div class="how-item"><div class="how-num">3</div><div class="how-text"><strong>Battle!</strong>Answer 10 MCQs as fast as possible. 15 seconds per question.</div></div>
+            <div class="how-item"><div class="how-num">4</div><div class="how-text"><strong>Win XP</strong>Winner earns 100 XP, loser gets 20 XP. Draw gives 50 XP each!</div></div>
+        </div>
+    </div>
+</div>
+
+<script>
+function joinByCode(){
+    const code=document.getElementById('manual-code').value.trim().toUpperCase();
+    if(code.length!==6){alert('Please enter a 6-character room code.');return;}
+    const f=document.createElement('form');f.method='POST';f.action='/quiz/join/'+code;
+    document.body.appendChild(f);f.submit();
+}
+document.getElementById('manual-code').addEventListener('keydown',e=>{if(e.key==='Enter')joinByCode();});
+</script>
+{% endblock %}

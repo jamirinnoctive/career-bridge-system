@@ -1,0 +1,885 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+.interview-layout {
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    gap: 0;
+    height: calc(100vh - 62px);
+    overflow: hidden;
+}
+.left-panel {
+    padding: 2rem;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+    background: #f5f7fa;
+}
+.right-panel {
+    background: #ffffff;
+    border-left: 1px solid rgba(59,125,245,0.15);
+    padding: 1.5rem;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+.progress-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+.q-badge-large {
+    background: linear-gradient(135deg, #4f8ef7, #7c3aed);
+    border-radius: 10px;
+    padding: 6px 16px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    white-space: nowrap;
+}
+.progress-bar-wrap {
+    flex: 1;
+    background: #e5e7eb;
+    border-radius: 10px;
+    height: 8px;
+    overflow: hidden;
+}
+.progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #4f8ef7, #7c3aed);
+    border-radius: 10px;
+    transition: width 0.5s ease;
+}
+.timer-display {
+    font-family: 'Courier New', monospace;
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: #4f8ef7;
+    background: rgba(79,142,247,0.1);
+    border: 1px solid rgba(79,142,247,0.25);
+    border-radius: 10px;
+    padding: 6px 16px;
+    white-space: nowrap;
+    transition: color 0.3s, background 0.3s;
+}
+.timer-display.urgent {
+    color: #ef4444;
+    background: rgba(239,68,68,0.12);
+    border-color: rgba(239,68,68,0.3);
+    animation: pulse-red 1s infinite;
+}
+@keyframes pulse-red { 0%,100%{opacity:1} 50%{opacity:0.7} }
+.question-card {
+    background: #ffffff;
+    border: 1px solid rgba(59,125,245,0.18);
+    border-radius: 16px;
+    padding: 1.8rem;
+    box-shadow: 0 2px 8px rgba(59,125,245,0.06);
+}
+.question-label {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #4f8ef7;
+    font-weight: 700;
+    margin-bottom: 0.8rem;
+}
+.question-text {
+    font-size: 1.25rem;
+    font-weight: 600;
+    line-height: 1.5;
+    color: #111827;
+}
+.answer-wrap {
+    background: #ffffff;
+    border: 1px solid rgba(59,125,245,0.18);
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(59,125,245,0.06);
+}
+.answer-textarea {
+    width: 100%;
+    background: #f9fafb;
+    border: 1px solid #d1d5db;
+    border-radius: 12px;
+    color: #111827;
+    padding: 1rem;
+    font-size: 0.95rem;
+    font-family: 'Inter', sans-serif;
+    resize: none;
+    transition: border-color 0.3s;
+    min-height: 140px;
+}
+.answer-textarea:focus {
+    outline: none;
+    border-color: #3b7df5;
+    background: #ffffff;
+    box-shadow: 0 0 0 3px rgba(59,125,245,0.1);
+}
+.answer-meta {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 0.7rem;
+    flex-wrap: wrap;
+}
+.meta-chip {
+    font-size: 0.75rem;
+    color: #6b7280;
+    background: #f3f4f6;
+    border: 1px solid #e5e7eb;
+    border-radius: 20px;
+    padding: 3px 10px;
+}
+.meta-chip.filler-alert { color: #f59e0b; border-color: rgba(245,158,11,0.3); background: rgba(245,158,11,0.08); }
+.action-row {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    flex-wrap: wrap;
+}
+.btn-voice {
+    display: flex; align-items: center; gap: 0.5rem;
+    background: rgba(34,211,165,0.1);
+    border: 1px solid rgba(34,211,165,0.3);
+    color: #22d3a5;
+    border-radius: 10px;
+    padding: 10px 20px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-size: 0.9rem;
+}
+.btn-voice.recording {
+    background: rgba(239,68,68,0.15);
+    border-color: rgba(239,68,68,0.4);
+    color: #ef4444;
+    animation: pulse-voice 1.2s infinite;
+}
+@keyframes pulse-voice { 0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,0.3)} 50%{box-shadow:0 0 0 8px rgba(239,68,68,0)} }
+.btn-submit-main {
+    flex: 1;
+    background: linear-gradient(135deg, #4f8ef7, #7c3aed);
+    border: none;
+    color: white;
+    border-radius: 12px;
+    padding: 12px 24px;
+    font-weight: 700;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+.btn-submit-main:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(79,142,247,0.4); }
+.skip-btn {
+    background: #f3f4f6;
+    border: 1px solid #d1d5db;
+    color: #6b7280;
+    border-radius: 10px;
+    padding: 10px 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0.85rem;
+}
+.skip-btn:hover { background: #e5e7eb; color: #374151; }
+
+/* Right panel */
+.camera-wrap {
+    position: relative;
+    border-radius: 14px;
+    overflow: hidden;
+    border: 2px solid #22d3a5;
+    box-shadow: 0 0 20px rgba(34,211,165,0.2);
+    background: #000;
+    aspect-ratio: 4/3;
+}
+.camera-wrap video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+.rec-indicator {
+    position: absolute;
+    top: 10px; left: 10px;
+    background: rgba(0,0,0,0.7);
+    border-radius: 20px;
+    padding: 4px 10px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #ef4444;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    backdrop-filter: blur(4px);
+}
+.rec-dot {
+    width: 7px; height: 7px;
+    background: #ef4444;
+    border-radius: 50%;
+    animation: rec-blink 1s infinite;
+}
+@keyframes rec-blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+.camera-status {
+    position: absolute;
+    bottom: 10px; right: 10px;
+    background: rgba(0,0,0,0.7);
+    border-radius: 8px;
+    padding: 4px 8px;
+    font-size: 0.68rem;
+    color: #22d3a5;
+    backdrop-filter: blur(4px);
+}
+.analysis-panel {
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 1rem;
+}
+.analysis-title {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: #6b7280;
+    font-weight: 700;
+    margin-bottom: 0.8rem;
+}
+.metric-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #f3f4f6;
+}
+.metric-row:last-child { border-bottom: none; }
+.metric-label { font-size: 0.82rem; color: #6b7280; display: flex; align-items: center; gap: 0.4rem; }
+.metric-value { font-size: 0.85rem; font-weight: 700; }
+.metric-value.good { color: #22d3a5; }
+.metric-value.warn { color: #f59e0b; }
+.metric-value.bad { color: #ef4444; }
+.hint-panel {
+    background: #eef3fe;
+    border: 1px solid rgba(59,125,245,0.2);
+    border-radius: 12px;
+    padding: 1rem;
+}
+.hint-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.6rem;
+    padding: 0.4rem 0;
+    font-size: 0.82rem;
+    color: #374151;
+}
+.hint-icon { font-size: 0.9rem; margin-top: 1px; flex-shrink: 0; }
+.eye-score-bar {
+    height: 6px;
+    background: #e5e7eb;
+    border-radius: 3px;
+    overflow: hidden;
+    margin-top: 4px;
+}
+.eye-score-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #22d3a5, #4f8ef7);
+    border-radius: 3px;
+    transition: width 0.5s;
+}
+@media (max-width: 900px) {
+    .interview-layout { grid-template-columns: 1fr; height: auto; }
+    .right-panel { border-left: none; border-top: 1px solid var(--border); }
+}
+</style>
+
+<form method="POST" action="/interview/{{ role }}/question/{{ num }}" id="answerForm">
+<input type="hidden" name="q_id" value="{{ question.id }}">
+<input type="hidden" name="filler_count" id="fillerCountInput" value="0">
+
+<div class="interview-layout">
+    <!-- LEFT PANEL -->
+    <div class="left-panel">
+        <!-- Back Button -->
+        <div>
+            <a href="/dashboard" onclick="return confirm('Interview chod doge? Progress save nahi hogi.')"
+               style="display:inline-flex;align-items:center;gap:0.4rem;font-size:0.82rem;font-weight:600;color:#6b7280;background:#f3f4f6;border:1px solid #d1d5db;border-radius:8px;padding:6px 14px;text-decoration:none;transition:all 0.2s;">
+                <i class="fas fa-arrow-left"></i> Back to Dashboard
+            </a>
+        </div>
+
+        <!-- Progress Row -->
+        <div class="progress-row">
+            <div class="q-badge-large">Q {{ num }} / {{ total }}</div>
+            <div class="progress-bar-wrap">
+                <div class="progress-bar-fill" style="width: {{ progress }}%"></div>
+            </div>
+            <div class="badge-role">{{ role }}</div>
+            <div class="timer-display" id="timerDisplay">2:00</div>
+        </div>
+
+        <!-- Question Card -->
+        <div class="question-card">
+            <div class="question-label" style="display:flex;align-items:center;justify-content:space-between;">
+                <span><i class="fas fa-question-circle me-1"></i>Interview Question</span>
+                <button type="button" id="speakBtn" onclick="speakQuestion()" title="Read question aloud"
+                    style="background:rgba(59,125,245,0.1);border:1px solid rgba(59,125,245,0.25);border-radius:8px;padding:4px 12px;font-size:0.75rem;font-weight:600;color:#3b7df5;cursor:pointer;display:flex;align-items:center;gap:0.4rem;transition:all 0.2s;">
+                    <i class="fas fa-volume-up" id="speakIcon"></i> <span id="speakBtnText">Listen</span>
+                </button>
+            </div>
+            <div class="question-text" id="questionText">{{ question.question }}</div>
+        </div>
+
+        <!-- Answer Area -->
+        <div class="answer-wrap">
+            <div class="question-label" style="margin-bottom:0.6rem;">Your Answer</div>
+            <textarea
+                class="answer-textarea"
+                name="answer"
+                id="answerField"
+                placeholder="Type your answer here or click the microphone to speak..."
+                rows="6"
+            ></textarea>
+            <div class="answer-meta">
+                <span class="meta-chip" id="wordCountChip"><i class="fas fa-text-width me-1"></i><span id="wordCountNum">0</span> words</span>
+                <span class="meta-chip filler-alert" id="fillerChip" style="display:none">
+                    <i class="fas fa-exclamation-triangle me-1"></i><span id="fillerNum">0</span> filler words
+                </span>
+                <span class="meta-chip" id="voiceStatusChip" style="display:none">
+                    <i class="fas fa-microphone me-1"></i>Voice active
+                </span>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="action-row">
+            <button type="button" class="btn-voice" id="voiceBtn">
+                <i class="fas fa-microphone"></i>
+                <span id="voiceBtnText">Speak Answer</span>
+            </button>
+            <button type="submit" class="btn-submit-main" id="submitBtn">
+                {% if num < total %}
+                    Next Question <i class="fas fa-arrow-right ms-1"></i>
+                {% else %}
+                    Finish Interview <i class="fas fa-flag-checkered ms-1"></i>
+                {% endif %}
+            </button>
+            <button type="submit" class="skip-btn" name="answer" value="">
+                Skip <i class="fas fa-forward ms-1"></i>
+            </button>
+        </div>
+
+        <!-- Tips -->
+        <div style="background:#fffbeb;border:1px solid rgba(217,119,6,0.2);border-radius:12px;padding:1rem;">
+            <div class="analysis-title" style="color:#d97706;margin-bottom:0.6rem;"><i class="fas fa-lightbulb me-1"></i>Tips for this answer</div>
+            <div style="font-size:0.82rem;color:#374151;line-height:1.6;">
+                • Speak clearly and at a measured pace<br>
+                • Use the STAR method (Situation, Task, Action, Result) for behavioral questions<br>
+                • Avoid filler words like "um", "uh", "basically", "you know"<br>
+                • Maintain eye contact with the camera as if looking at the interviewer<br>
+                • Structure your answer: definition → explanation → example
+            </div>
+        </div>
+    </div>
+
+    <!-- RIGHT PANEL -->
+    <div class="right-panel">
+        <!-- Camera -->
+        <div>
+            <div class="analysis-title"><i class="fas fa-video me-1"></i>Camera Feed</div>
+            <div class="camera-wrap">
+                <video id="webcamVideo" autoplay muted playsinline></video>
+                <canvas id="analysisCanvas" style="display:none"></canvas>
+                <div class="rec-indicator">
+                    <div class="rec-dot"></div> REC
+                </div>
+                <div class="camera-status" id="cameraStatus">Connecting...</div>
+            </div>
+        </div>
+
+        <!-- Body Language Metrics -->
+        <div class="analysis-panel">
+            <div class="analysis-title"><i class="fas fa-eye me-1"></i>Body Language Analysis</div>
+            <div class="metric-row">
+                <span class="metric-label"><i class="fas fa-eye"></i> Eye Contact</span>
+                <span class="metric-value good" id="eyeContactVal">Tracking...</span>
+            </div>
+            <div class="eye-score-bar"><div class="eye-score-fill" id="eyeScoreBar" style="width:0%"></div></div>
+            <div class="metric-row" style="margin-top:0.5rem;">
+                <span class="metric-label"><i class="fas fa-running"></i> Movement</span>
+                <span class="metric-value" id="movementVal">Low</span>
+            </div>
+            <div class="metric-row">
+                <span class="metric-label"><i class="fas fa-user-check"></i> Posture</span>
+                <span class="metric-value good" id="postureVal">Good</span>
+            </div>
+            <div class="metric-row">
+                <span class="metric-label"><i class="fas fa-clock"></i> On-camera time</span>
+                <span class="metric-value good" id="onCameraVal">100%</span>
+            </div>
+        </div>
+
+        <!-- Live Metrics -->
+        <div class="analysis-panel">
+            <div class="analysis-title"><i class="fas fa-chart-line me-1"></i>Live Metrics</div>
+            <div class="metric-row">
+                <span class="metric-label"><i class="fas fa-text-width"></i> Words typed</span>
+                <span class="metric-value good" id="liveWords">0</span>
+            </div>
+            <div class="metric-row">
+                <span class="metric-label"><i class="fas fa-ban"></i> Filler words</span>
+                <span class="metric-value good" id="liveFillers">0</span>
+            </div>
+            <div class="metric-row">
+                <span class="metric-label"><i class="fas fa-tachometer-alt"></i> Speaking pace</span>
+                <span class="metric-value" id="paceval">—</span>
+            </div>
+        </div>
+
+        <!-- Interviewer Hints -->
+        <div class="hint-panel">
+            <div class="analysis-title"><i class="fas fa-brain me-1"></i>Interviewer Tips</div>
+            <div class="hint-item"><span class="hint-icon">👁️</span> Look directly at the camera — not the screen</div>
+            <div class="hint-item"><span class="hint-icon">🪑</span> Sit straight, shoulders back, relaxed</div>
+            <div class="hint-item"><span class="hint-icon">🤝</span> Keep hands visible, avoid excessive gestures</div>
+            <div class="hint-item"><span class="hint-icon">🗣️</span> Speak at 130-160 words per minute</div>
+            <div class="hint-item"><span class="hint-icon">⏸️</span> It's okay to pause and think before answering</div>
+        </div>
+    </div>
+</div>
+</form>
+
+<script>
+// ─── TIMER ───────────────────────────────────────────────────────────────────
+let totalSeconds = 120;
+const timerEl = document.getElementById('timerDisplay');
+const timerInterval = setInterval(() => {
+    totalSeconds--;
+    const m = Math.floor(totalSeconds / 60);
+    const s = totalSeconds % 60;
+    timerEl.textContent = `${m}:${s.toString().padStart(2,'0')}`;
+    if (totalSeconds <= 30) timerEl.classList.add('urgent');
+    if (totalSeconds <= 0) {
+        clearInterval(timerInterval);
+        document.getElementById('answerForm').submit();
+    }
+}, 1000);
+
+// ─── FILLER WORDS ────────────────────────────────────────────────────────────
+const FILLERS = ['um','uh','like','basically','you know','actually','literally','right','so','well','okay','sort of','kind of'];
+function countFillers(text) {
+    let count = 0;
+    const lower = text.toLowerCase();
+    FILLERS.forEach(w => {
+        const re = new RegExp('\\b' + w.replace(/ /g,'\\s+') + '\\b', 'g');
+        const m = lower.match(re);
+        if (m) count += m.length;
+    });
+    return count;
+}
+
+// ─── WORD COUNT + FILLER LIVE UPDATE ─────────────────────────────────────────
+const answerField = document.getElementById('answerField');
+const wordCountNum = document.getElementById('wordCountNum');
+const fillerNum = document.getElementById('fillerNum');
+const fillerChip = document.getElementById('fillerChip');
+const fillerInput = document.getElementById('fillerCountInput');
+const liveWords = document.getElementById('liveWords');
+const liveFillers = document.getElementById('liveFillers');
+const paceEl = document.getElementById('paceval');
+
+let startTypingTime = null;
+answerField.addEventListener('input', () => {
+    if (!startTypingTime) startTypingTime = Date.now();
+    const words = answerField.value.trim().split(/\s+/).filter(w => w.length > 0);
+    const wc = words.length;
+    wordCountNum.textContent = wc;
+    liveWords.textContent = wc;
+    const fc = countFillers(answerField.value);
+    fillerNum.textContent = fc;
+    liveFillers.textContent = fc;
+    fillerInput.value = fc;
+    fillerChip.style.display = fc > 0 ? 'inline-flex' : 'none';
+    if (wc > 10 && startTypingTime) {
+        const mins = (Date.now() - startTypingTime) / 60000;
+        const wpm = Math.round(wc / mins);
+        paceEl.textContent = wpm + ' wpm';
+        paceEl.className = 'metric-value ' + (wpm >= 100 && wpm <= 200 ? 'good' : 'warn');
+    }
+});
+
+// ─── PREVENT PASTE ───────────────────────────────────────────────────────────
+answerField.addEventListener('paste', e => { e.preventDefault(); });
+
+// ─── VOICE RECOGNITION ───────────────────────────────────────────────────────
+const voiceBtn = document.getElementById('voiceBtn');
+const voiceBtnText = document.getElementById('voiceBtnText');
+const voiceStatusChip = document.getElementById('voiceStatusChip');
+let recognition = null;
+
+voiceBtn.addEventListener('click', () => {
+    if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
+        alert('Voice recognition not supported in this browser. Use Chrome.');
+        return;
+    }
+    if (recognition) {
+        recognition.stop();
+        return;
+    }
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    recognition = new SR();
+    recognition.lang = 'en-US';
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.start();
+    voiceBtn.classList.add('recording');
+    voiceBtnText.textContent = 'Stop Recording';
+    voiceStatusChip.style.display = 'inline-flex';
+    let baseText = answerField.value;
+    recognition.onresult = (e) => {
+        let interim = '';
+        let final = '';
+        for (let i = e.resultIndex; i < e.results.length; i++) {
+            if (e.results[i].isFinal) final += e.results[i][0].transcript + ' ';
+            else interim += e.results[i][0].transcript;
+        }
+        answerField.value = baseText + final + interim;
+        if (final) baseText = baseText + final;
+        answerField.dispatchEvent(new Event('input'));
+    };
+    recognition.onerror = (e) => {
+        console.warn('Voice error:', e.error);
+        stopRecognition();
+    };
+    recognition.onend = () => stopRecognition();
+});
+
+function stopRecognition() {
+    if (recognition) { recognition.stop(); recognition = null; }
+    voiceBtn.classList.remove('recording');
+    voiceBtnText.textContent = 'Speak Answer';
+    voiceStatusChip.style.display = 'none';
+}
+
+// ─── WEBCAM + MEDIAPIPE FACE MESH ────────────────────────────────────────────
+const video        = document.getElementById('webcamVideo');
+const canvas       = document.getElementById('analysisCanvas');
+const cameraStatus = document.getElementById('cameraStatus');
+const eyeContactVal= document.getElementById('eyeContactVal');
+const eyeScoreBar  = document.getElementById('eyeScoreBar');
+const movementVal  = document.getElementById('movementVal');
+const postureVal   = document.getElementById('postureVal');
+const onCameraVal  = document.getElementById('onCameraVal');
+
+// ── All tracked metrics (accumulated over session) ────────────────────────────
+let totalFrames      = 0;
+let onCamFrames      = 0;
+let goodPostureF     = 0;   // frames nose is high (sitting straight)
+let highMoveF        = 0;   // frames with excessive movement
+let normalMoveF      = 0;
+let goodEyeF         = 0;   // frames with centered iris (looking at camera)
+let eyeHistory       = [];
+let moveHistory      = [];
+let prevLandmarks    = null;
+let mpLoaded         = false;
+
+const SESSION_KEY = 'skillcheck_session_{{ sess_id }}';
+
+function saveData() {
+    if (totalFrames === 0) return;
+    const eyePct      = Math.round((goodEyeF    / totalFrames) * 100);
+    const posturePct  = Math.round((goodPostureF / totalFrames) * 100);
+    const onCamPct    = Math.round((onCamFrames  / totalFrames) * 100);
+    const highMovePct = Math.round((highMoveF    / totalFrames) * 100);
+    localStorage.setItem(SESSION_KEY, JSON.stringify({
+        eyeScore:        eyePct,
+        postureScore:    posturePct,
+        onCameraPercent: onCamPct,
+        highMovePct:     highMovePct,
+        totalFrames:     totalFrames
+    }));
+}
+
+// ── MediaPipe result handler ──────────────────────────────────────────────────
+let noFaceStreak = 0;
+const NO_FACE_GRACE = 5; // frames of missing face to tolerate before flipping UI (avoids flicker)
+
+function onFaceResults(results) {
+    totalFrames++;
+    const lm = results.multiFaceLandmarks && results.multiFaceLandmarks[0];
+    const rawFacePresent = !!(lm && lm.length >= 468);
+    const hasIris = !!(lm && lm.length >= 478);
+
+    if (rawFacePresent) {
+        noFaceStreak = 0;
+    } else {
+        noFaceStreak++;
+    }
+    // Treat face as present if we saw it recently — smooths over single-frame dropouts
+    const facePresent = rawFacePresent || noFaceStreak <= NO_FACE_GRACE;
+    if (rawFacePresent) onCamFrames++;
+
+    // ── EYE CONTACT via iris landmarks ───────────────────────────────────────
+    let eyeScore = eyeHistory.length ? eyeHistory[eyeHistory.length - 1] : 0;
+    if (rawFacePresent && hasIris) {
+        // Left iris X relative to left eye width
+        const liX = lm[468].x, leL = lm[33].x, leR = lm[133].x;
+        const lW  = Math.abs(leR - leL);
+        const lR  = lW > 0 ? (liX - leL) / lW : 0.5;
+
+        // Right iris
+        const riX = lm[473].x, reL = lm[362].x, reR = lm[263].x;
+        const rW  = Math.abs(reR - reL);
+        const rR  = rW > 0 ? (riX - reL) / rW : 0.5;
+
+        // Iris centered in eye horizontally = looking forward. Widened band —
+        // the original 0.25-0.75 window was too strict and flagged normal gaze as "off".
+        const lOK = lR > 0.18 && lR < 0.82;
+        const rOK = rR > 0.18 && rR < 0.82;
+
+        // Vertical check: iris Y in eye height (also widened, and softened penalty)
+        const liY = lm[468].y, letop = lm[159].y, lebot = lm[145].y;
+        const lH  = Math.abs(lebot - letop);
+        const lVR = lH > 0 ? (liY - letop) / lH : 0.5;
+        const vOK = lVR > 0.08 && lVR < 0.92;
+
+        const horizScore = ((lOK?1:0) + (rOK?1:0)) / 2 * 100;
+        eyeScore = Math.round(horizScore * (vOK ? 1 : 0.75));
+    } else if (rawFacePresent && !hasIris) {
+        // Face detected but iris refinement unavailable — don't punish, hold last score
+        eyeScore = Math.max(eyeScore, 60);
+    }
+
+    // Rolling avg for display (larger window = steadier reading)
+    eyeHistory.push(eyeScore);
+    if (eyeHistory.length > 30) eyeHistory.shift();
+    const avgEye = Math.round(eyeHistory.reduce((a,b)=>a+b,0) / eyeHistory.length);
+
+    if (eyeScore >= 55) goodEyeF++;
+
+    eyeScoreBar.style.width = avgEye + '%';
+    if (!facePresent) {
+        eyeContactVal.textContent = 'No face';
+        eyeContactVal.className = 'metric-value bad';
+    } else if (avgEye >= 55) {
+        eyeContactVal.textContent = 'Good ✓';
+        eyeContactVal.className = 'metric-value good';
+    } else if (avgEye >= 30) {
+        eyeContactVal.textContent = 'Fair';
+        eyeContactVal.className = 'metric-value warn';
+    } else {
+        eyeContactVal.textContent = 'Look at camera!';
+        eyeContactVal.className = 'metric-value bad';
+    }
+
+    // ── MOVEMENT: nose tip travel between frames ──────────────────────────────
+    if (rawFacePresent && prevLandmarks) {
+        const dx   = (lm[1].x - prevLandmarks[1].x) * 320;
+        const dy   = (lm[1].y - prevLandmarks[1].y) * 240;
+        const dist = Math.sqrt(dx*dx + dy*dy);
+        moveHistory.push(dist);
+        if (moveHistory.length > 20) moveHistory.shift();
+        const avgMove = moveHistory.reduce((a,b)=>a+b,0) / moveHistory.length;
+
+        // Thresholds raised — the originals flagged normal head micro-motion as excessive.
+        if (avgMove > 14) {
+            highMoveF++;
+            movementVal.textContent = 'Too much ⚠';
+            movementVal.className = 'metric-value warn';
+        } else if (avgMove > 3) {
+            normalMoveF++;
+            movementVal.textContent = 'Natural ✓';
+            movementVal.className = 'metric-value good';
+        } else {
+            movementVal.textContent = 'Very still';
+            movementVal.className = 'metric-value';
+        }
+    } else if (!facePresent) {
+        movementVal.textContent = '—';
+        movementVal.className = 'metric-value';
+    }
+    if (rawFacePresent) prevLandmarks = lm;
+
+    // ── POSTURE: nose Y position in frame (0=top, 1=bottom) ──────────────────
+    if (rawFacePresent) {
+        const noseY = lm[1].y;
+        if (noseY < 0.5) {
+            goodPostureF++;
+            postureVal.textContent = 'Good ✓';
+            postureVal.className = 'metric-value good';
+        } else if (noseY < 0.68) {
+            postureVal.textContent = 'Sit up more';
+            postureVal.className = 'metric-value warn';
+        } else {
+            postureVal.textContent = 'Slouching ⚠';
+            postureVal.className = 'metric-value bad';
+        }
+    } else if (!facePresent) {
+        postureVal.textContent = '—';
+        postureVal.className = 'metric-value';
+    }
+
+    // ── ON-CAMERA % ──────────────────────────────────────────────────────────
+    const pct = Math.round((onCamFrames / totalFrames) * 100);
+    onCameraVal.textContent = pct + '%';
+    onCameraVal.className = 'metric-value ' + (pct>=70?'good':pct>=40?'warn':'bad');
+
+    // Save every 30 frames (~6s)
+    if (totalFrames % 30 === 0) saveData();
+}
+
+// Save on every form submit AND page unload — ensures data persists before navigation
+window.addEventListener('beforeunload', saveData);
+document.addEventListener('DOMContentLoaded', function() {
+    var form = document.getElementById('answerForm');
+    if (form) {
+        form.addEventListener('submit', function() {
+            saveData();
+        });
+    }
+});
+
+// ── Load MediaPipe from CDN ───────────────────────────────────────────────────
+function loadScript(src, cb) {
+    const s = document.createElement('script');
+    s.src = src; s.crossOrigin = 'anonymous';
+    s.onload = cb;
+    s.onerror = () => startPixelFallback();
+    document.head.appendChild(s);
+}
+
+function initMediaPipe() {
+    if (typeof FaceMesh === 'undefined' || typeof Camera === 'undefined') {
+        startPixelFallback(); return;
+    }
+    const faceMesh = new FaceMesh({ locateFile: f =>
+        'https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/' + f });
+    faceMesh.setOptions({
+        maxNumFaces: 1, refineLandmarks: true,
+        minDetectionConfidence: 0.5, minTrackingConfidence: 0.5
+    });
+    faceMesh.onResults(onFaceResults);
+
+    const cam = new Camera(video, {
+        onFrame: async () => { await faceMesh.send({ image: video }); },
+        width: 320, height: 240
+    });
+    cam.start().then(() => {
+        cameraStatus.textContent = 'Camera Active';
+        cameraStatus.style.color = '#22d3a5';
+        mpLoaded = true;
+        // Final save on form submit
+    }).catch(() => startPixelFallback());
+}
+
+// ── Pixel fallback if no internet ────────────────────────────────────────────
+function startPixelFallback() {
+    const ctx2 = canvas.getContext('2d', { willReadFrequently: true });
+    let prevGray = null;
+    navigator.mediaDevices.getUserMedia({ video: { width:320, height:240 }, audio:false })
+        .then(stream => {
+            video.srcObject = stream;
+            cameraStatus.textContent = 'Camera Active (basic)';
+            cameraStatus.style.color = '#f59e0b';
+            video.addEventListener('playing', () => {
+                canvas.width = 320; canvas.height = 240;
+                setInterval(() => {
+                    if (video.readyState < 2) return;
+                    ctx2.drawImage(video, 0, 0, 320, 240);
+                    let px; try { px = ctx2.getImageData(0,0,320,240).data; } catch(e){return;}
+                    totalFrames++;
+                    let bright=0, ct=0;
+                    for (let i=0;i<px.length;i+=4*16) { bright+=(px[i]*77+px[i+1]*150+px[i+2]*29)>>8; ct++; }
+                    if (ct>0 && bright/ct > 30) onCamFrames++;
+                    // Movement
+                    const gray = new Uint8Array(320*240);
+                    for (let i=0;i<320*240;i++){const p=i*4;gray[i]=(px[p]*77+px[p+1]*150+px[p+2]*29)>>8;}
+                    if (prevGray) {
+                        let d=0; for(let i=0;i<gray.length;i+=8) d+=Math.abs(gray[i]-prevGray[i]);
+                        const avg=d/(gray.length/8);
+                        if (avg>18) highMoveF++;
+                        movementVal.textContent = avg>18?'Too much ⚠':avg>5?'Natural ✓':'Very still';
+                        movementVal.className='metric-value '+(avg>18?'warn':avg>5?'good':'');
+                    }
+                    prevGray = gray;
+                    const pct = Math.round((onCamFrames/totalFrames)*100);
+                    onCameraVal.textContent = pct+'%';
+                    onCameraVal.className='metric-value '+(pct>=70?'good':pct>=40?'warn':'bad');
+                    eyeContactVal.textContent = '—';
+                    postureVal.textContent = '—';
+                    if (totalFrames%30===0) saveData();
+                }, 300);
+            });
+        })
+        .catch(() => {
+            cameraStatus.textContent = 'Camera Off';
+            cameraStatus.style.color = '#ef4444';
+            document.querySelector('.camera-wrap').style.borderColor = '#ef4444';
+        });
+}
+
+// Start: load MediaPipe, fallback if fails
+loadScript('https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js', () => {
+    loadScript('https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js', () => {
+        navigator.mediaDevices.getUserMedia({ video:{ width:320, height:240 }, audio:false })
+            .then(stream => { video.srcObject = stream; initMediaPipe(); })
+            .catch(() => startPixelFallback());
+    });
+});
+
+// ─── TEXT-TO-SPEECH ───────────────────────────────────────────────────────────
+const questionText = document.getElementById('questionText').textContent.trim();
+const speakBtn = document.getElementById('speakBtn');
+const speakIcon = document.getElementById('speakIcon');
+const speakBtnText = document.getElementById('speakBtnText');
+let ttsUtterance = null;
+
+function speakQuestion() {
+    if (!window.speechSynthesis) return;
+    if (window.speechSynthesis.speaking) {
+        window.speechSynthesis.cancel();
+        return;
+    }
+    ttsUtterance = new SpeechSynthesisUtterance(questionText);
+    ttsUtterance.lang = 'en-US';
+    ttsUtterance.rate = 0.92;
+    ttsUtterance.pitch = 1.05;
+
+    // Pick a natural voice if available
+    const voices = window.speechSynthesis.getVoices();
+    const preferred = voices.find(v => v.lang === 'en-US' && v.name.toLowerCase().includes('google'))
+                   || voices.find(v => v.lang === 'en-US')
+                   || voices[0];
+    if (preferred) ttsUtterance.voice = preferred;
+
+    ttsUtterance.onstart = () => {
+        speakIcon.className = 'fas fa-stop';
+        speakBtnText.textContent = 'Stop';
+        speakBtn.style.background = 'rgba(239,68,68,0.1)';
+        speakBtn.style.borderColor = 'rgba(239,68,68,0.3)';
+        speakBtn.style.color = '#ef4444';
+    };
+    ttsUtterance.onend = ttsUtterance.onerror = () => {
+        speakIcon.className = 'fas fa-volume-up';
+        speakBtnText.textContent = 'Listen';
+        speakBtn.style.background = 'rgba(59,125,245,0.1)';
+        speakBtn.style.borderColor = 'rgba(59,125,245,0.25)';
+        speakBtn.style.color = '#3b7df5';
+    };
+    window.speechSynthesis.speak(ttsUtterance);
+}
+
+// Auto-read question on page load (after short delay to let voices load)
+window.addEventListener('load', () => {
+    setTimeout(() => {
+        if (window.speechSynthesis) {
+            // Ensure voices are loaded
+            if (window.speechSynthesis.getVoices().length === 0) {
+                window.speechSynthesis.onvoiceschanged = () => speakQuestion();
+            } else {
+                speakQuestion();
+            }
+        }
+    }, 800);
+});
+</script>
+{% endblock %}

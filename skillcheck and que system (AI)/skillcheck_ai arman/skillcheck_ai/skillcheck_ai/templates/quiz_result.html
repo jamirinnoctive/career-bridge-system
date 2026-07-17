@@ -1,0 +1,195 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+.result-wrap { max-width: 860px; margin: 0 auto; padding: 2rem 1.5rem; }
+
+/* Winner banner */
+.winner-banner {
+    text-align: center;
+    padding: 3rem 2rem;
+    background: #ffffff;
+    border: 1px solid rgba(0,0,0,.08);
+    border-radius: 24px;
+    margin-bottom: 1.5rem;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0,0,0,.05);
+}
+.winner-banner::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 4px;
+}
+.banner-win::before { background: linear-gradient(90deg, #10b981, #6d28d9, #b45309); }
+.banner-lose::before { background: linear-gradient(90deg, #9ca3af, #6b7280); }
+.banner-draw::before { background: linear-gradient(90deg, #0072c6, #6d28d9); }
+.winner-icon { font-size: 4rem; margin-bottom: 0.5rem; display: block; }
+.winner-text { font-size: 2rem; font-weight: 900; margin-bottom: 0.5rem; }
+.win-text { background: linear-gradient(135deg, #059669, #b45309); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.lose-text { color: #6b7280; }
+.draw-text { background: linear-gradient(135deg, #0072c6, #6d28d9); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.winner-sub { color: #6b7280; font-size: 0.95rem; }
+.xp-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: rgba(180,83,9,0.08);
+    border: 1px solid rgba(180,83,9,0.25);
+    color: #92400e;
+    border-radius: 100px;
+    padding: 6px 16px;
+    font-weight: 800;
+    font-size: 0.95rem;
+    margin-top: 1rem;
+}
+
+/* Score comparison */
+.score-grid { display: grid; grid-template-columns: 1fr 60px 1fr; gap: 0; margin-bottom: 1.5rem; align-items: center; }
+.score-card {
+    background: #ffffff;
+    border: 1px solid rgba(109,40,217,0.15);
+    border-radius: 20px;
+    padding: 1.75rem;
+    text-align: center;
+    box-shadow: 0 2px 12px rgba(0,0,0,.04);
+}
+.score-card.winner-card { border-color: rgba(16,185,129,0.4); box-shadow: 0 0 24px rgba(16,185,129,0.1); }
+.score-card.loser-card { border-color: rgba(220,38,38,0.15); opacity: 0.75; }
+.score-player-name { font-size: 1rem; font-weight: 700; color: #6d28d9; margin-bottom: 0.25rem; }
+.score-number { font-size: 3.5rem; font-weight: 900; line-height: 1; }
+.score-number.s-win { color: #059669; }
+.score-number.s-lose { color: #dc2626; }
+.score-number.s-draw { color: #0072c6; }
+.score-out-of { color: #6b7280; font-size: 0.85rem; }
+.vs-divider { text-align: center; font-size: 1.2rem; font-weight: 900; color: #9ca3af; }
+
+/* Question breakdown */
+.breakdown-card {
+    background: #ffffff;
+    border: 1px solid rgba(109,40,217,0.15);
+    border-radius: 20px;
+    padding: 1.75rem;
+    margin-bottom: 1.5rem;
+    overflow-x: auto;
+    box-shadow: 0 2px 12px rgba(0,0,0,.04);
+}
+.breakdown-title { font-size: 0.85rem; font-weight: 700; color: #6d28d9; text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 1.25rem; }
+.bd-table { width: 100%; border-collapse: collapse; }
+.bd-table th { font-size: 0.72rem; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.06em; padding: 0 0.75rem 0.75rem; text-align: left; }
+.bd-table td { padding: 0.65rem 0.75rem; border-top: 1px solid rgba(0,0,0,0.06); font-size: 0.85rem; vertical-align: top; color: var(--text); }
+.bd-table tr:hover td { background: rgba(109,40,217,0.03); }
+.q-num { color: #6b7280; font-weight: 700; white-space: nowrap; }
+.q-text { color: var(--text); max-width: 280px; }
+.ans-cell { white-space: nowrap; }
+.ans-correct { color: #059669; font-weight: 700; }
+.ans-wrong { color: #dc2626; font-weight: 700; }
+.ans-skip { color: #9ca3af; }
+
+/* Action buttons */
+.action-row { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+.btn-lobby { background: linear-gradient(135deg, #6d28d9, #0072c6); border: none; color: white; border-radius: 14px; padding: 13px 32px; font-weight: 700; font-size: 0.95rem; cursor: pointer; transition: all 0.3s; text-decoration: none; display: inline-flex; align-items: center; gap: 0.4rem; }
+.btn-lobby:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(109,40,217,0.3); color: white; }
+.btn-again { background: transparent; border: 2px solid rgba(109,40,217,0.35); color: #6d28d9; border-radius: 14px; padding: 13px 32px; font-weight: 700; font-size: 0.95rem; cursor: pointer; transition: all 0.2s; text-decoration: none; display: inline-flex; align-items: center; gap: 0.4rem; }
+.btn-again:hover { background: rgba(109,40,217,0.08); color: #5b21b6; }
+</style>
+
+<div class="result-wrap">
+
+    <!-- Winner Banner -->
+    <div class="winner-banner {% if is_draw %}banner-draw{% elif i_won %}banner-win{% else %}banner-lose{% endif %}">
+        {% if is_draw %}
+            <span class="winner-icon">🤝</span>
+            <div class="winner-text draw-text">It's a Draw!</div>
+            <div class="winner-sub">Neck and neck — both players tied!</div>
+        {% elif i_won %}
+            <span class="winner-icon">🏆</span>
+            <div class="winner-text win-text">You Win!</div>
+            <div class="winner-sub">Outstanding performance! You dominated the battle.</div>
+        {% else %}
+            <span class="winner-icon">😔</span>
+            <div class="winner-text lose-text">Better Luck Next Time</div>
+            <div class="winner-sub">Keep practicing — you'll get them next time!</div>
+        {% endif %}
+        <div>
+            <span class="xp-badge"><i class="fas fa-star"></i> +{{ xp_earned }} XP Earned</span>
+        </div>
+    </div>
+
+    <!-- Score Comparison -->
+    <div class="score-grid" style="margin-bottom:1.5rem">
+        <div class="score-card {% if battle.winner_id == battle.player1_id %}winner-card{% elif battle.status == 'finished' and battle.winner_id %}loser-card{% endif %}">
+            <div class="score-player-name">
+                {{ p1.name if p1 else 'Player 1' }}
+                {% if current_uid == battle.player1_id %}<br><span style="font-size:0.72rem;color:#6d28d9">(You)</span>{% endif %}
+            </div>
+            <div class="score-number {% if battle.winner_id == battle.player1_id %}s-win{% elif battle.winner_id and battle.winner_id != battle.player1_id %}s-lose{% else %}s-draw{% endif %}">{{ p1_score }}</div>
+            <div class="score-out-of">out of {{ questions|length }}</div>
+            {% if battle.winner_id == battle.player1_id %}<div style="color:#059669;font-size:0.78rem;font-weight:700;margin-top:0.5rem">🏆 WINNER</div>{% endif %}
+        </div>
+        <div class="vs-divider">VS</div>
+        <div class="score-card {% if battle.winner_id == battle.player2_id %}winner-card{% elif battle.status == 'finished' and battle.winner_id %}loser-card{% endif %}">
+            <div class="score-player-name">
+                {{ p2.name if p2 else 'Player 2' }}
+                {% if current_uid == battle.player2_id %}<br><span style="font-size:0.72rem;color:#0072c6">(You)</span>{% endif %}
+            </div>
+            <div class="score-number {% if battle.winner_id == battle.player2_id %}s-win{% elif battle.winner_id and battle.winner_id != battle.player2_id %}s-lose{% else %}s-draw{% endif %}">{{ p2_score }}</div>
+            <div class="score-out-of">out of {{ questions|length }}</div>
+            {% if battle.winner_id == battle.player2_id %}<div style="color:#059669;font-size:0.78rem;font-weight:700;margin-top:0.5rem">🏆 WINNER</div>{% endif %}
+        </div>
+    </div>
+
+    <!-- Question Breakdown -->
+    {% if questions %}
+    <div class="breakdown-card">
+        <div class="breakdown-title"><i class="fas fa-list-alt me-1"></i> Question Breakdown</div>
+        <table class="bd-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Question</th>
+                    <th>Answer</th>
+                    <th>{{ p1.name if p1 else 'P1' }}</th>
+                    <th>{{ p2.name if p2 else 'P2' }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for i, q in enumerate(questions) %}
+                <tr>
+                    <td class="q-num">Q{{ i+1 }}</td>
+                    <td class="q-text">{{ q.question[:70] }}{% if q.question|length > 70 %}...{% endif %}</td>
+                    <td class="ans-cell" style="color:#6d28d9;font-weight:600">{{ q.correct }})
+                        {% if q.correct == 'A' %}{{ q.option_a[:25] }}
+                        {% elif q.correct == 'B' %}{{ q.option_b[:25] }}
+                        {% elif q.correct == 'C' %}{{ q.option_c[:25] }}
+                        {% else %}{{ q.option_d[:25] }}{% endif %}
+                    </td>
+                    <td class="ans-cell">
+                        {% set a1 = p1_answers.get(i) %}
+                        {% if a1 %}
+                            {% if a1.is_correct %}<span class="ans-correct">✓ {{ a1.selected }}</span>
+                            {% else %}<span class="ans-wrong">✗ {{ a1.selected }}</span>{% endif %}
+                        {% else %}<span class="ans-skip">—</span>{% endif %}
+                    </td>
+                    <td class="ans-cell">
+                        {% set a2 = p2_answers.get(i) %}
+                        {% if a2 %}
+                            {% if a2.is_correct %}<span class="ans-correct">✓ {{ a2.selected }}</span>
+                            {% else %}<span class="ans-wrong">✗ {{ a2.selected }}</span>{% endif %}
+                        {% else %}<span class="ans-skip">—</span>{% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+    <!-- Action Buttons -->
+    <div class="action-row">
+        <a href="/quiz/lobby" class="btn-lobby"><i class="fas fa-home"></i> Back to Lobby</a>
+        <a href="/quiz/lobby" class="btn-again"><i class="fas fa-redo"></i> Play Again</a>
+    </div>
+
+</div>
+{% endblock %}

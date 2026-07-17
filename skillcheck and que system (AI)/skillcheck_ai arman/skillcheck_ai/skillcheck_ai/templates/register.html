@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+.auth-wrap { min-height: calc(100vh - 58px); display: flex; align-items: center; justify-content: center; padding: 2rem; }
+.auth-card { width: 100%; max-width: 410px; background: #ffffff; border: 1px solid rgba(0,0,0,.1); border-radius: 22px; padding: 2.5rem; box-shadow: 0 10px 40px rgba(0,0,0,.08); }
+.auth-logo { text-align: center; margin-bottom: 2rem; }
+.auth-icon { font-size: 2.8rem; display: block; margin-bottom: .5rem; }
+.auth-title { font-family: 'Orbitron', sans-serif; font-size: 1.3rem; font-weight: 800; color: var(--text); letter-spacing: .04em; }
+.auth-title span { color: var(--accent); }
+.auth-sub { color: var(--text-dim); font-size: .82rem; margin-top: .3rem; }
+.auth-lbl { font-size: .72rem; font-weight: 600; color: var(--text-dim); text-transform: uppercase; letter-spacing: .1em; margin-bottom: .4rem; font-family: 'Orbitron', sans-serif; }
+.auth-inp { width: 100%; background: rgba(0,114,198,.04); border: 1px solid rgba(0,114,198,.2); border-radius: 10px; color: var(--text); padding: .8rem 1rem; font-size: .9rem; font-family: 'Inter', sans-serif; transition: border-color .3s; margin-bottom: 1.1rem; }
+.auth-inp:focus { outline: none; border-color: var(--accent); background: rgba(0,114,198,.07); box-shadow: 0 0 0 3px rgba(0,114,198,.1); }
+.auth-inp::placeholder { color: var(--text-dim); }
+.auth-btn { width: 100%; background: linear-gradient(135deg, var(--accent), #005a99); border: none; color: #fff; border-radius: 11px; padding: 12px; font-family: 'Orbitron', sans-serif; font-weight: 700; font-size: .82rem; letter-spacing: .06em; cursor: pointer; transition: all .3s; margin-top: .25rem; }
+.auth-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(0,114,198,.3); }
+.auth-footer { text-align: center; margin-top: 1.4rem; font-size: .83rem; color: var(--text-dim); }
+.auth-footer a { color: var(--accent); }
+</style>
+<div class="auth-wrap">
+    <div class="auth-card">
+        <div class="auth-logo">
+            <span class="auth-icon">🧠</span>
+            <div class="auth-title">SKILL<span>CHECK</span> AI</div>
+            <div class="auth-sub">Create your account</div>
+        </div>
+        <form method="POST">
+            <div class="auth-lbl">Full Name</div>
+            <input name="name" class="auth-inp" type="text" placeholder="Your name" required>
+            <div class="auth-lbl">Email</div>
+            <input name="email" class="auth-inp" type="email" placeholder="you@example.com" required>
+            <div class="auth-lbl">Password</div>
+            <input name="password" class="auth-inp" type="password" placeholder="Create a password" required>
+            <button class="auth-btn" type="submit">CREATE ACCOUNT <i class="fas fa-arrow-right" style="margin-left:.3rem"></i></button>
+        </form>
+        <div class="auth-footer">Already have an account? <a href="/login">Sign in</a></div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,370 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+.dash { padding: 1.75rem 1.75rem 4rem; max-width: 1100px; margin: 0 auto; }
+
+/* ── Hero ── */
+.hero {
+    background: linear-gradient(135deg, #f5f9ff, #eef4fb);
+    border: 1px solid rgba(0,114,198,.15);
+    border-radius: 20px; padding: 2rem 2.25rem 1.75rem;
+    margin-bottom: 2rem; position: relative; overflow: hidden;
+}
+.hero::after {
+    content: ''; position: absolute;
+    top: -60px; right: -60px; width: 220px; height: 220px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(0,114,198,.08) 0%, transparent 70%);
+    pointer-events: none;
+}
+.hero-eyebrow {
+    font-family: 'Orbitron', sans-serif; font-size: .58rem; font-weight: 600;
+    color: var(--accent); letter-spacing: .28em; text-transform: uppercase;
+    margin-bottom: .55rem; display: flex; align-items: center; gap: .5rem;
+}
+.hero-eyebrow::before { content: ''; width: 22px; height: 1px; background: var(--accent); box-shadow: 0 0 6px var(--accent); display: inline-block; }
+.hero-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: clamp(1.5rem, 3.5vw, 2.2rem);
+    font-weight: 900; letter-spacing: .03em; line-height: 1.1;
+    color: var(--text); margin-bottom: .45rem;
+}
+.hero-title span { color: var(--accent); }
+.hero-sub { font-size: .85rem; color: var(--text-dim); margin-bottom: 1.2rem; }
+
+/* Typewriter */
+.tw-row { display: flex; align-items: center; gap: .5rem; margin-bottom: .9rem; }
+.tw-label { font-family: 'Orbitron', sans-serif; font-size: .55rem; color: var(--text-dim); letter-spacing: .18em; text-transform: uppercase; white-space: nowrap; }
+.tw-text { font-size: .95rem; font-style: italic; font-weight: 300; color: var(--text); }
+.tw-cursor { display: inline-block; width: 2px; height: 1em; background: var(--accent); box-shadow: 0 0 6px var(--accent); vertical-align: middle; animation: blink-c 1s step-end infinite; }
+@keyframes blink-c { 0%,100%{opacity:1} 50%{opacity:0} }
+
+.sessions-pill {
+    display: inline-flex; align-items: center; gap: .45rem;
+    background: rgba(0,114,198,.06); border: 1px solid var(--border);
+    border-radius: 20px; padding: 5px 14px; font-size: .76rem; color: var(--text-dim);
+}
+.sessions-num { font-family: 'Orbitron', sans-serif; font-weight: 700; color: var(--accent); font-size: .85rem; }
+
+/* Orbit progress bar (bottom of hero) */
+.orbit-strip {
+    margin-top: 1.4rem; padding-top: 1.25rem;
+    border-top: 1px solid rgba(0,0,0,.06);
+    position: relative;
+}
+.orbit-line {
+    height: 2px;
+    background: repeating-linear-gradient(90deg, rgba(0,114,198,.35) 0, rgba(0,114,198,.35) 8px, transparent 8px, transparent 20px);
+    border-radius: 2px; margin-bottom: .65rem; position: relative;
+}
+.orbit-nodes { display: flex; justify-content: space-between; align-items: center; }
+.orbit-node {
+    display: flex; flex-direction: column; align-items: center; gap: .25rem;
+    font-size: .68rem; color: var(--text-dim); font-family: 'Orbitron', sans-serif; letter-spacing: .05em;
+}
+.orbit-node.active .node-dot { background: var(--accent3); box-shadow: 0 0 10px var(--accent3); }
+.orbit-node.active .node-label { color: var(--accent3); }
+.node-dot {
+    width: 14px; height: 14px; border-radius: 50%;
+    background: rgba(0,0,0,.08); border: 2px solid rgba(0,0,0,.12);
+}
+.orbit-tip { font-size: .68rem; color: var(--text-dim); text-align: center; margin-top: .4rem; }
+
+/* ── Section header ── */
+.sec-header {
+    display: flex; align-items: center; gap: .75rem;
+    margin-bottom: 1.4rem;
+}
+.sec-label {
+    font-family: 'Orbitron', sans-serif; font-size: .65rem; font-weight: 700;
+    color: var(--accent); text-transform: uppercase; letter-spacing: .18em;
+    white-space: nowrap; display: flex; align-items: center; gap: .4rem;
+}
+.sec-line { flex: 1; height: 1px; background: linear-gradient(90deg, rgba(0,114,198,.25), transparent); }
+
+/* ── Role planet grid ── */
+.role-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+    gap: 1.1rem;
+}
+.role-card {
+    position: relative;
+    background: var(--surface);
+    border: 1px solid rgba(0,0,0,.08);
+    border-radius: 18px; padding: 1.3rem 1.15rem 1.1rem;
+    cursor: pointer; text-decoration: none; display: block; overflow: hidden;
+    transition: transform .3s cubic-bezier(.34,1.56,.64,1), border-color .3s, box-shadow .3s;
+}
+.role-card::before {
+    content: ''; position: absolute;
+    top: -25px; right: -25px; width: 90px; height: 90px; border-radius: 50%;
+    background: radial-gradient(circle, var(--pc) 0%, transparent 70%);
+    opacity: .12; transition: opacity .3s, transform .3s;
+}
+.role-card:hover { transform: translateY(-6px); border-color: var(--pc); box-shadow: 0 0 0 1px var(--pc), 0 14px 30px rgba(0,0,0,.1), 0 0 20px var(--pg); }
+.role-card:hover::before { opacity: .3; transform: scale(1.4); }
+
+/* CSS planet orb */
+.planet-orb {
+    width: 50px; height: 50px; border-radius: 50%;
+    background: radial-gradient(circle at 33% 33%, var(--pl), var(--pc) 55%, var(--pd) 100%);
+    box-shadow: 0 0 14px var(--pc), 0 4px 16px rgba(0,0,0,.15), inset 0 -5px 10px rgba(0,0,0,.35);
+    margin-bottom: .85rem; position: relative; flex-shrink: 0;
+    transition: box-shadow .3s;
+}
+.planet-orb::after {
+    content: ''; position: absolute;
+    top: 7px; left: 9px; width: 13px; height: 9px; border-radius: 50%;
+    background: rgba(255,255,255,.5); transform: rotate(-30deg); filter: blur(2px);
+}
+.role-card:hover .planet-orb { box-shadow: 0 0 22px var(--pc), 0 0 40px var(--pg), inset 0 -5px 10px rgba(0,0,0,.35); }
+
+.role-name { font-family: 'Orbitron', sans-serif; font-size: .68rem; font-weight: 700; color: var(--text); letter-spacing: .03em; margin-bottom: .3rem; line-height: 1.3; }
+.role-desc { font-size: .7rem; color: var(--text-dim); line-height: 1.45; margin-bottom: .85rem; }
+.enter-btn {
+    display: inline-flex; align-items: center; gap: .3rem;
+    background: rgba(0,0,0,.04); border: 1px solid rgba(0,0,0,.1);
+    border-radius: 7px; padding: 4px 11px;
+    font-size: .65rem; font-weight: 700; color: var(--text-dim);
+    font-family: 'Orbitron', sans-serif; letter-spacing: .05em;
+    transition: all .2s;
+}
+.role-card:hover .enter-btn { background: var(--pc); border-color: var(--pc); color: #000; box-shadow: 0 0 12px var(--pg); }
+
+/* ── Landing zone (bottom of page) ── */
+.landing-wrap {
+    display: grid; grid-template-columns: 1fr 1.6fr 1fr;
+    gap: 1rem; margin-top: 2rem;
+    background: var(--surface2); border: 1px solid rgba(0,114,198,.12);
+    border-radius: 20px; padding: 1.5rem; align-items: start;
+}
+.landing-left { display: flex; flex-direction: column; gap: .4rem; }
+.landing-planet-label {
+    font-family: 'Orbitron', sans-serif; font-size: .55rem; font-weight: 600;
+    color: var(--text-dim); letter-spacing: .2em; text-transform: uppercase;
+}
+.landing-planet-name {
+    font-family: 'Orbitron', sans-serif; font-size: 1.4rem; font-weight: 900;
+    color: var(--accent3); line-height: 1.1;
+}
+.zone-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: .75rem; }
+.zone-card {
+    background: #ffffff; border: 1px solid rgba(0,0,0,.08);
+    border-radius: 14px; padding: 1rem .8rem; text-align: center;
+    transition: all .2s; text-decoration: none; display: block;
+}
+.zone-card:hover { border-color: var(--accent3); background: rgba(22,163,74,.06); transform: translateY(-2px); }
+.zone-icon { font-size: 1.8rem; margin-bottom: .5rem; }
+.zone-name { font-family: 'Orbitron', sans-serif; font-size: .62rem; font-weight: 700; color: var(--accent3); letter-spacing: .06em; margin-bottom: .3rem; }
+.zone-desc { font-size: .68rem; color: var(--text-dim); line-height: 1.4; margin-bottom: .6rem; }
+.zone-enter { display: inline-block; background: rgba(22,163,74,.12); border: 1px solid rgba(22,163,74,.3); color: var(--accent3); border-radius: 6px; padding: 3px 12px; font-size: .65rem; font-weight: 700; font-family: 'Orbitron', sans-serif; }
+
+.planet-status-col { display: flex; flex-direction: column; gap: .5rem; }
+.ps-label { font-family: 'Orbitron', sans-serif; font-size: .55rem; font-weight: 600; color: var(--accent); letter-spacing: .2em; text-transform: uppercase; margin-bottom: .35rem; }
+.ps-row { display: flex; align-items: center; gap: .5rem; font-size: .75rem; color: var(--text-dim); margin-bottom: .4rem; }
+.ps-bar-bg { flex: 1; height: 5px; background: rgba(0,0,0,.08); border-radius: 3px; }
+.ps-bar-fill { height: 100%; border-radius: 3px; }
+.ps-val { font-size: .7rem; font-weight: 600; color: var(--text); white-space: nowrap; }
+.planet-badge-box { background: rgba(22,163,74,.05); border: 1px solid rgba(22,163,74,.2); border-radius: 12px; padding: .75rem .9rem; margin-top: .5rem; }
+.pb-label { font-family: 'Orbitron', sans-serif; font-size: .55rem; color: var(--text-dim); letter-spacing: .18em; text-transform: uppercase; margin-bottom: .4rem; }
+.pb-row { display: flex; align-items: center; gap: .6rem; }
+.pb-icon { width: 34px; height: 34px; background: rgba(22,163,74,.15); border: 1px solid rgba(22,163,74,.3); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: .9rem; flex-shrink: 0; }
+.pb-name { font-family: 'Orbitron', sans-serif; font-size: .68rem; font-weight: 700; color: var(--accent3); }
+.pb-desc { font-size: .65rem; color: var(--text-dim); }
+.view-badges-btn { width: 100%; margin-top: .5rem; background: transparent; border: 1px solid rgba(0,0,0,.1); color: var(--text-dim); border-radius: 8px; padding: 6px; font-size: .7rem; cursor: pointer; transition: all .2s; font-family: 'Inter', sans-serif; }
+.view-badges-btn:hover { border-color: var(--accent3); color: var(--accent3); }
+
+/* Warp drive button */
+.warp-btn {
+    display: flex; align-items: center; gap: .5rem;
+    background: linear-gradient(135deg, rgba(109,40,217,.12), rgba(109,40,217,.06));
+    border: 1px solid rgba(109,40,217,.35); border-radius: 12px;
+    padding: 10px 18px; color: #6d28d9; font-family: 'Orbitron', sans-serif;
+    font-size: .7rem; font-weight: 700; letter-spacing: .05em; cursor: pointer;
+    margin-top: .75rem; transition: all .25s; text-decoration: none; justify-content: center;
+}
+.warp-btn:hover { background: rgba(109,40,217,.18); box-shadow: 0 0 16px rgba(109,40,217,.15); color: #5b21b6; }
+
+/* Footer tip */
+.footer-tip {
+    margin-top: 2rem; padding: .75rem 1.25rem;
+    background: rgba(0,114,198,.04); border: 1px solid var(--border);
+    border-radius: 10px; font-size: .75rem; color: var(--text-dim);
+    display: flex; align-items: center; gap: .5rem;
+}
+
+@media (max-width: 700px) {
+    .dash { padding: 1rem 1rem 3rem; }
+    .role-grid { grid-template-columns: repeat(2, 1fr); }
+    .landing-wrap { grid-template-columns: 1fr; }
+    .zone-grid { grid-template-columns: 1fr; }
+}
+</style>
+
+{% set planet_colors = [
+  ('#00ff88','#00ff88bb','#006633','rgba(0,255,136,.35)'),
+  ('#f59e0b','#f59e0bbb','#7a4200','rgba(245,158,11,.35)'),
+  ('#00e5ff','#00e5ffbb','#005f70','rgba(0,229,255,.35)'),
+  ('#a78bfa','#a78bfabb','#4c1d95','rgba(167,139,250,.35)'),
+  ('#22c55e','#22c55ebb','#14532d','rgba(34,197,94,.35)'),
+  ('#f87171','#f87171bb','#7f1d1d','rgba(248,113,113,.35)'),
+  ('#38bdf8','#38bdf8bb','#0c4a6e','rgba(56,189,248,.35)'),
+  ('#c084fc','#c084fcbb','#4a044e','rgba(192,132,252,.35)'),
+  ('#34d399','#34d399bb','#064e3b','rgba(52,211,153,.35)'),
+  ('#fb923c','#fb923cbb','#7c2d12','rgba(251,146,60,.35)'),
+  ('#60a5fa','#60a5fabb','#1e3a8a','rgba(96,165,250,.35)'),
+  ('#e879f9','#e879f9bb','#4a044e','rgba(232,121,249,.35)'),
+  ('#4ade80','#4ade80bb','#14532d','rgba(74,222,128,.35)'),
+  ('#f472b6','#f472b6bb','#831843','rgba(244,114,182,.35)'),
+  ('#2dd4bf','#2dd4bfbb','#134e4a','rgba(45,212,191,.35)'),
+  ('#fbbf24','#fbbf24bb','#78350f','rgba(251,191,36,.35)')
+] %}
+
+<div class="dash">
+
+    <!-- Hero -->
+    <div class="hero">
+        <div class="hero-eyebrow">Interview Simulator</div>
+        <h1 class="hero-title">CHOOSE YOUR <span>DESTINATION</span></h1>
+        <p class="hero-sub">Explore planets. Gain knowledge. Unlock your future.</p>
+
+        <div class="tw-row">
+            <span class="tw-label">Interviewer asks —</span>
+            <span class="tw-text" id="twQ"></span><span class="tw-cursor"></span>
+        </div>
+
+        <div class="sessions-pill">
+            <i class="fas fa-history" style="color:var(--accent);font-size:.75rem"></i>
+            Sessions completed: <span class="sessions-num">&nbsp;{{ past_count }}</span>
+        </div>
+
+        <!-- Orbit progress strip -->
+        <div class="orbit-strip">
+            <div class="orbit-line"></div>
+            <div class="orbit-nodes">
+                {% set planets = ['Python','Java','Web Dev','Cloud','AI/ML','Coming Soon'] %}
+                {% for p in planets %}
+                <div class="orbit-node {% if loop.index <= 4 %}active{% endif %}">
+                    <div class="node-dot"></div>
+                    <span>{{ p }}</span>
+                </div>
+                {% endfor %}
+            </div>
+            <div class="orbit-tip">Complete Interview Zone to unlock Warp Drive!</div>
+        </div>
+    </div>
+
+    <!-- Role Grid -->
+    <div class="sec-header">
+        <div class="sec-label"><i class="fas fa-rocket" style="font-size:.65rem"></i> Choose Your Role</div>
+        <div class="sec-line"></div>
+    </div>
+
+    <div class="role-grid">
+        {% for role in roles %}
+        {% set c = planet_colors[loop.index0 % planet_colors|length] %}
+        <a href="/interview/{{ role.key | urlencode }}" class="role-card"
+           style="--pc:{{ c[0] }};--pl:{{ c[1] }};--pd:{{ c[2] }};--pg:{{ c[3] }}">
+            <div class="planet-orb"></div>
+            <div class="role-name">{{ role.key }}</div>
+            <div class="role-desc">{{ role.desc }}</div>
+            <span class="enter-btn">ENTER <i class="fas fa-arrow-right" style="font-size:.55rem"></i></span>
+        </a>
+        {% endfor %}
+    </div>
+
+    <!-- Landing Zone panel -->
+    <div class="landing-wrap">
+        <!-- Left: you landed on -->
+        <div class="landing-left">
+            <div class="landing-planet-label">&gt;&gt;&gt; You landed on</div>
+            <div class="landing-planet-name">PROGRAMMING<br>PLANET</div>
+            <div style="font-size:.7rem;color:var(--text-dim);margin-top:.4rem;line-height:1.5">Explore the world of code and logic.</div>
+            <a href="/quiz/lobby" class="warp-btn" style="margin-top:1rem">
+                <i class="fas fa-lock" style="font-size:.65rem"></i> WARP DRIVE
+            </a>
+        </div>
+
+        <!-- Center: zone cards -->
+        <div>
+            <div class="sec-label" style="margin-bottom:.75rem">CHOOSE A LANDING ZONE →</div>
+            <div class="zone-grid">
+                <a href="/dashboard" class="zone-card">
+                    <div class="zone-icon">📚</div>
+                    <div class="zone-name">RESEARCH STATION</div>
+                    <div class="zone-desc">Study notes, concepts, cheat sheets and download resources.</div>
+                    <span class="zone-enter">ENTER</span>
+                </a>
+                <a href="/dashboard" class="zone-card" style="--accent3:#6d28d9;border-color:rgba(109,40,217,.2)">
+                    <div class="zone-icon" style="color:#6d28d9">🎮</div>
+                    <div class="zone-name" style="color:#6d28d9">TRAINING SIMULATOR</div>
+                    <div class="zone-desc">Test your knowledge with quizzes and earn achievements.</div>
+                    <span class="zone-enter" style="background:rgba(109,40,217,.1);border-color:rgba(109,40,217,.3);color:#6d28d9">ENTER</span>
+                </a>
+                <a href="/quiz/lobby" class="zone-card" style="border-color:rgba(147,51,234,.2)">
+                    <div class="zone-icon" style="color:#9333ea">💼</div>
+                    <div class="zone-name" style="color:#9333ea">GALACTIC EMBASSY</div>
+                    <div class="zone-desc">Prepare for interviews with top company questions &amp; HR prep.</div>
+                    <span class="zone-enter" style="background:rgba(147,51,234,.1);border-color:rgba(147,51,234,.3);color:#9333ea">ENTER</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- Right: planet status -->
+        <div class="planet-status-col">
+            <div class="ps-label">Planet Status</div>
+            <div>
+                <div class="ps-row">
+                    <span style="width:80px;font-size:.7rem">📖 Notes Read</span>
+                    <div class="ps-bar-bg"><div class="ps-bar-fill" style="width:72%;background:linear-gradient(90deg,var(--accent3),#16a34a)"></div></div>
+                    <span class="ps-val">18/25</span>
+                </div>
+                <div class="ps-row">
+                    <span style="width:80px;font-size:.7rem">📋 Quizzes</span>
+                    <div class="ps-bar-bg"><div class="ps-bar-fill" style="width:80%;background:linear-gradient(90deg,var(--accent),#0099bb)"></div></div>
+                    <span class="ps-val">32/40</span>
+                </div>
+                <div class="ps-row">
+                    <span style="width:80px;font-size:.7rem">🎤 Interviews</span>
+                    <div class="ps-bar-bg"><div class="ps-bar-fill" style="width:66%;background:linear-gradient(90deg,var(--amber),#d97706)"></div></div>
+                    <span class="ps-val">10/15</span>
+                </div>
+            </div>
+            <div class="planet-badge-box">
+                <div class="pb-label">Planet Badge</div>
+                <div class="pb-row">
+                    <div class="pb-icon">&lt;/&gt;</div>
+                    <div>
+                        <div class="pb-name">CODE EXPLORER</div>
+                        <div class="pb-desc">Awarded for completing 50% of this planet</div>
+                    </div>
+                </div>
+            </div>
+            <button class="view-badges-btn">VIEW ALL BADGES</button>
+        </div>
+    </div>
+
+    <!-- Footer tip -->
+    <div class="footer-tip">
+        <i class="fas fa-lightbulb" style="color:var(--amber)"></i>
+        TIP: Complete all zones to maximize your learning!
+    </div>
+
+</div>
+
+<script>
+(function(){
+    var qs = ["Tell me about yourself.","What is your greatest technical strength?","Describe a challenging bug you solved.","How do you handle pressure during a deadline?","Where do you see yourself in 5 years?","Walk me through a recent project you're proud of.","How do you keep your technical skills sharp?"];
+    var el = document.getElementById('twQ'); if(!el) return;
+    if(window.matchMedia('(prefers-reduced-motion:reduce)').matches){ el.textContent=qs[0]; return; }
+    var qi=0,ci=0,del=false,pause=false;
+    function tick(){
+        var q=qs[qi];
+        if(!del&&!pause){ ci++; el.textContent=q.slice(0,ci); if(ci===q.length){pause=true;setTimeout(()=>{pause=false;del=true;tick();},2400);return;} setTimeout(tick,50+Math.random()*30); }
+        else if(del&&!pause){ ci--; el.textContent=q.slice(0,ci); if(ci===0){del=false;qi=(qi+1)%qs.length;setTimeout(tick,500);return;} setTimeout(tick,25); }
+    }
+    setTimeout(tick,800);
+})();
+</script>
+{% endblock %}

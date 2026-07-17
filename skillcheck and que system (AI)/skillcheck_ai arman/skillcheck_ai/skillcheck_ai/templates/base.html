@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SkillCheck AI</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --ground:    #ffffff;
+            --surface:   #ffffff;
+            --surface2:  #f5f7fa;
+            --surface3:  #eef1f6;
+            --text:      #0a0a0a;
+            --text-dim:  #55606e;
+            --accent:    #0072c6;
+            --accent2:   #6d28d9;
+            --accent3:   #16a34a;
+            --amber:     #b45309;
+            --red:       #dc2626;
+            --border:    rgba(0,0,0,0.1);
+            --border2:   rgba(109,40,217,0.2);
+            --glow-c:    rgba(0,114,198,0.12);
+            --glow-v:    rgba(109,40,217,0.15);
+        }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--ground);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        .page-wrap { position: relative; z-index: 1; display: flex; flex-direction: column; min-height: 100vh; }
+
+        /* ── Topnav ── */
+        .top-nav {
+            height: 58px;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 1.5rem;
+            background: rgba(255,255,255,.92);
+            border-bottom: 1px solid var(--border);
+            backdrop-filter: blur(20px);
+            position: sticky; top: 0; z-index: 200;
+            flex-shrink: 0;
+        }
+        .nav-brand {
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700; font-size: 1.05rem;
+            color: var(--text); text-decoration: none;
+            display: flex; align-items: center; gap: .6rem;
+            letter-spacing: .04em;
+        }
+        .nav-brand-icon {
+            width: 32px; height: 32px; border-radius: 8px;
+            background: linear-gradient(135deg, #0072c622, #6d28d933);
+            border: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1rem;
+        }
+        .nav-brand-text { display: flex; flex-direction: column; line-height: 1; }
+        .nav-brand-name { color: var(--text); font-size: .95rem; }
+        .nav-brand-name span { color: var(--accent); }
+        .nav-brand-sub {
+            font-family: 'Inter', sans-serif; font-size: .55rem; font-weight: 400;
+            color: var(--text-dim); letter-spacing: .18em; text-transform: uppercase; margin-top: 2px;
+        }
+        .nav-right { display: flex; align-items: center; gap: .75rem; }
+        .nav-pill {
+            display: flex; align-items: center; gap: .35rem;
+            background: rgba(0,114,198,.06); border: 1px solid var(--border);
+            border-radius: 20px; padding: 4px 12px;
+            font-family: 'Orbitron', sans-serif; font-size: .65rem; color: var(--accent);
+        }
+        .nav-pill .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent3); box-shadow: 0 0 6px var(--accent3); animation: blink-dot 2s ease-in-out infinite; }
+        @keyframes blink-dot { 0%,100%{opacity:1} 50%{opacity:.4} }
+        .nav-btn {
+            border-radius: 8px; padding: 5px 14px; font-size: .76rem; font-weight: 600;
+            text-decoration: none; cursor: pointer; border: 1px solid; transition: all .2s;
+            display: inline-flex; align-items: center; gap: .3rem;
+        }
+        .nav-btn-quiz { background: rgba(109,40,217,.1); border-color: var(--border2); color: #6d28d9; }
+        .nav-btn-quiz:hover { background: rgba(109,40,217,.18); color: #5b21b6; }
+        .nav-btn-logout { background: rgba(220,38,38,.06); border-color: rgba(220,38,38,.25); color: #b91c1c; }
+        .nav-btn-logout:hover { background: rgba(220,38,38,.14); color: #991b1b; }
+
+        /* ── App shell ── */
+        .app-shell { display: flex; flex: 1; min-height: 0; }
+
+        /* ── Sidebar ── */
+        .sidebar {
+            width: 220px; flex-shrink: 0;
+            background: var(--surface2);
+            border-right: 1px solid var(--border);
+            padding: 1.25rem .9rem;
+            display: flex; flex-direction: column; gap: 1.4rem;
+            overflow-y: auto;
+        }
+        .sb-label {
+            font-family: 'Orbitron', sans-serif; font-size: .55rem; font-weight: 600;
+            color: var(--text-dim); text-transform: uppercase; letter-spacing: .2em;
+            margin-bottom: .5rem;
+        }
+        .sb-stat {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: .38rem 0; border-bottom: 1px solid rgba(0,0,0,.06);
+            font-size: .78rem;
+        }
+        .sb-stat:last-child { border-bottom: none; }
+        .sb-stat-l { color: var(--text-dim); display: flex; align-items: center; gap: .4rem; }
+        .sb-stat-v { font-family: 'Orbitron', sans-serif; font-size: .7rem; font-weight: 700; color: var(--text); }
+        /* progress circle */
+        .progress-circle-wrap { display: flex; flex-direction: column; align-items: center; gap: .5rem; }
+        .progress-circle {
+            width: 80px; height: 80px; position: relative;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .progress-circle svg { position: absolute; inset: 0; transform: rotate(-90deg); }
+        .progress-circle-bg { fill: none; stroke: rgba(0,0,0,.08); stroke-width: 5; }
+        .progress-circle-fg { fill: none; stroke: var(--accent); stroke-width: 5; stroke-linecap: round; stroke-dasharray: 220; stroke-dashoffset: 53; filter: drop-shadow(0 0 4px var(--accent)); }
+        .progress-circle-inner { font-family: 'Orbitron', sans-serif; font-size: 1.1rem; font-weight: 900; color: var(--text); }
+        .progress-circle-sub { font-size: .6rem; color: var(--text-dim); text-align: center; letter-spacing: .05em; }
+        /* fuel bar */
+        .fuel-bar-bg { background: rgba(0,0,0,.07); border-radius: 4px; height: 6px; overflow: hidden; margin-top: .35rem; }
+        .fuel-bar-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, var(--accent), #005a99); box-shadow: 0 0 8px rgba(0,114,198,.4); }
+        /* rank badge */
+        .rank-card {
+            background: rgba(180,83,9,.06); border: 1px solid rgba(180,83,9,.2);
+            border-radius: 12px; padding: .7rem .8rem;
+            display: flex; align-items: center; gap: .6rem;
+        }
+        .rank-icon {
+            width: 34px; height: 34px; border-radius: 9px;
+            background: linear-gradient(135deg, #f59e0b, #b45309);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1rem; box-shadow: 0 0 10px rgba(180,83,9,.3); flex-shrink: 0;
+        }
+        .rank-name { font-family: 'Orbitron', sans-serif; font-size: .65rem; font-weight: 700; color: #92400e; }
+        .rank-stars { font-size: .62rem; color: #b45309; margin-top: 1px; }
+        /* achievement */
+        .achieve-card {
+            background: rgba(109,40,217,.06); border: 1px solid rgba(109,40,217,.2);
+            border-radius: 12px; padding: .7rem .8rem;
+            display: flex; align-items: center; gap: .6rem;
+        }
+        .achieve-icon { width: 34px; height: 34px; border-radius: 9px; background: rgba(109,40,217,.15); display: flex; align-items: center; justify-content: center; font-size: 1rem; flex-shrink: 0; }
+        .achieve-name { font-size: .75rem; font-weight: 700; color: #6d28d9; }
+        .achieve-desc { font-size: .68rem; color: var(--text-dim); }
+
+        .main-content { flex: 1; overflow-x: hidden; overflow-y: auto; }
+
+        /* ── Global utils ── */
+        a { color: var(--accent); text-decoration: none; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--ground); }
+        ::-webkit-scrollbar-thumb { background: rgba(0,0,0,.15); border-radius: 3px; }
+
+        @media (max-width: 768px) {
+            .sidebar { display: none; }
+            .top-nav { padding: 0 1rem; }
+        }
+    </style>
+</head>
+<body>
+<div class="page-wrap">
+
+    <!-- ── Topnav ── -->
+    <nav class="top-nav">
+        <a class="nav-brand" href="/">
+            <div class="nav-brand-icon">🎓</div>
+            <div class="nav-brand-text">
+                <span class="nav-brand-name">SKILL<span>CHECK</span> AI</span>
+                <span class="nav-brand-sub">Learn · Practice · Conquer</span>
+            </div>
+        </a>
+        <div class="nav-right">
+            <div class="nav-pill"><span class="dot"></span> LIVE</div>
+            {% if session.get('user_id') %}
+            <a href="/quiz/lobby" class="nav-btn nav-btn-quiz"><i class="fas fa-gamepad"></i> Quiz Battle</a>
+            <a href="/logout" class="nav-btn nav-btn-logout"><i class="fas fa-sign-out-alt"></i> Logout</a>
+            {% elif session.get('quiz_user_id') %}
+            <a href="/dashboard" class="nav-btn nav-btn-quiz"><i class="fas fa-brain"></i> Interview</a>
+            <a href="/quiz/logout" class="nav-btn nav-btn-logout"><i class="fas fa-sign-out-alt"></i> Logout</a>
+            {% endif %}
+        </div>
+    </nav>
+
+    <!-- ── Shell ── -->
+    <div class="app-shell">
+
+        <!-- Sidebar (only for logged-in interview users) -->
+        {% if session.get('user_id') %}
+        <aside class="sidebar">
+            <!-- Progress circle -->
+            <div>
+                <div class="sb-label">Mission Status</div>
+                <div class="progress-circle-wrap">
+                    <div class="progress-circle">
+                        <svg viewBox="0 0 80 80" width="80" height="80">
+                            <circle class="progress-circle-bg" cx="40" cy="40" r="35"/>
+                            <circle class="progress-circle-fg" cx="40" cy="40" r="35"/>
+                        </svg>
+                        <span class="progress-circle-inner">78%</span>
+                    </div>
+                    <div class="progress-circle-sub">OVERALL PROGRESS</div>
+                </div>
+                <div style="margin-top:.9rem">
+                    <div class="sb-stat">
+                        <span class="sb-stat-l">🌍 Planets Explored</span>
+                        <span class="sb-stat-v">4/5</span>
+                    </div>
+                    <div class="sb-stat">
+                        <span class="sb-stat-l">📋 Quizzes Done</span>
+                        <span class="sb-stat-v">64/85</span>
+                    </div>
+                    <div class="sb-stat">
+                        <span class="sb-stat-l">🎤 Interviews</span>
+                        <span class="sb-stat-v">23/40</span>
+                    </div>
+                    <div class="sb-stat">
+                        <span class="sb-stat-l">🏅 Badges</span>
+                        <span class="sb-stat-v">15</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Fuel tank -->
+            <div>
+                <div class="sb-label">Fuel Tank</div>
+                <div style="font-size:.76rem;color:var(--text-dim);display:flex;align-items:center;gap:.35rem;margin-bottom:.35rem;">
+                    <i class="fas fa-rocket" style="color:var(--accent);font-size:.7rem"></i> Rocket Fuel
+                    <span style="margin-left:auto;font-family:'Orbitron',sans-serif;font-size:.68rem;color:var(--accent)">78%</span>
+                </div>
+                <div class="fuel-bar-bg"><div class="fuel-bar-fill" style="width:78%"></div></div>
+                <div style="font-size:.65rem;color:var(--text-dim);margin-top:.35rem">Keep learning to fill your fuel!</div>
+            </div>
+
+            <!-- Rank -->
+            <div>
+                <div class="sb-label">Current Rank</div>
+                <div class="rank-card">
+                    <div class="rank-icon">⭐</div>
+                    <div>
+                        <div class="rank-name">STAR EXPLORER</div>
+                        <div class="rank-stars">★★★★☆</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Achievement -->
+            <div>
+                <div class="sb-label">Recent Achievement</div>
+                <div class="achieve-card">
+                    <div class="achieve-icon">🏆</div>
+                    <div>
+                        <div class="achieve-name">Quiz Master</div>
+                        <div class="achieve-desc">Complete 50 quizzes</div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+        {% endif %}
+
+        <main class="main-content">
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+</div>
+</body>
+</html>

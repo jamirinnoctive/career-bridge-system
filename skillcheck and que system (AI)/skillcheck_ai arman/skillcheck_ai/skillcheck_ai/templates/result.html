@@ -1,0 +1,603 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+.result-page { padding: 2.5rem; max-width: 1100px; margin: 0 auto; }
+.result-hero {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 2rem;
+    margin-bottom: 2.5rem;
+    align-items: center;
+}
+.score-circle-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    background: #ffffff;
+    border: 1px solid rgba(59,125,245,0.18);
+    border-radius: 20px;
+    box-shadow: 0 4px 16px rgba(59,125,245,0.08);
+}
+.score-circle-svg { width: 160px; height: 160px; }
+.score-center-text {
+    text-align: center;
+    margin-top: 1rem;
+}
+.score-percent {
+    font-size: 2.2rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, #4f8ef7, #7c3aed);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+.grade-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 56px; height: 56px;
+    border-radius: 14px;
+    font-size: 1.8rem;
+    font-weight: 900;
+    color: white;
+    margin-top: 0.5rem;
+}
+.hero-info { display: flex; flex-direction: column; gap: 1rem; }
+.hero-title-res {
+    font-size: 2rem;
+    font-weight: 800;
+    color: #111827;
+}
+.hero-subtitle { color: #6b7280; font-size: 1rem; }
+.stat-cards {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    margin-top: 1rem;
+}
+.stat-card {
+    background: #ffffff;
+    border: 1px solid rgba(59,125,245,0.15);
+    border-radius: 14px;
+    padding: 1rem 1.2rem;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(59,125,245,0.06);
+}
+.stat-card-val { font-size: 1.6rem; font-weight: 800; }
+.stat-card-lbl { font-size: 0.72rem; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; }
+.section-head {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #374151;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 1.2rem;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+.section-head::after { content:''; flex:1; height:1px; background:rgba(59,125,245,0.12); }
+.q-table-wrap { overflow-x: auto; }
+.q-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 8px;
+}
+.q-table thead th {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: #6b7280;
+    font-weight: 700;
+    padding: 0 1rem 0.5rem;
+    border-bottom: 1px solid rgba(59,125,245,0.1);
+}
+.q-row td {
+    background: #ffffff;
+    padding: 1rem;
+    vertical-align: middle;
+}
+.q-row td:first-child { border-radius: 12px 0 0 12px; border-left: 3px solid var(--row-color, #4f8ef7); }
+.q-row td:last-child { border-radius: 0 12px 12px 0; }
+.q-row:hover td { background: #f5f8ff; }
+.q-num { width: 36px; height: 36px; border-radius: 8px; background: rgba(79,142,247,0.1); color: #4f8ef7; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.9rem; }
+.q-text-snippet { font-size: 0.85rem; color: #1f2937; max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.q-answer-snippet { font-size: 0.8rem; color: #6b7280; max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.score-bar-wrap { width: 100px; }
+.score-bar-bg { height: 8px; background: #e5e7eb; border-radius: 4px; overflow: hidden; }
+.score-bar-inner { height: 100%; border-radius: 4px; }
+.score-label { font-size: 0.8rem; font-weight: 700; margin-top: 2px; }
+.status-badge { border-radius: 20px; padding: 4px 12px; font-size: 0.72rem; font-weight: 700; border: 1px solid; white-space: nowrap; }
+.status-excellent { background: rgba(34,211,165,0.12); border-color: rgba(34,211,165,0.3); color: #22d3a5; }
+.status-good { background: rgba(79,142,247,0.12); border-color: rgba(79,142,247,0.3); color: #4f8ef7; }
+.status-partial { background: rgba(245,158,11,0.12); border-color: rgba(245,158,11,0.3); color: #f59e0b; }
+.status-needs { background: rgba(239,68,68,0.12); border-color: rgba(239,68,68,0.3); color: #ef4444; }
+.status-skipped { background: rgba(136,153,187,0.1); border-color: rgba(136,153,187,0.2); color: #8899bb; }
+.q-missing-row td { background: #fffaf0; padding: 0.6rem 1rem 1rem; }
+.q-missing-title { font-size: 0.72rem; font-weight: 700; color: #b45309; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.4rem; }
+.q-missing-chip { display: inline-block; background: #fef3c7; border: 1px solid #fcd34d; color: #92400e; border-radius: 12px; padding: 2px 10px; font-size: 0.75rem; margin: 2px 4px 2px 0; }
+
+.analysis-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem; }
+.analysis-card {
+    background: #ffffff;
+    border: 1px solid rgba(59,125,245,0.15);
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 10px rgba(59,125,245,0.06);
+}
+.analysis-card-title { font-weight: 700; font-size: 0.95rem; margin-bottom: 1.2rem; display: flex; align-items: center; gap: 0.5rem; color: #111827; }
+.meter-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.8rem; }
+.meter-label { font-size: 0.85rem; color: #6b7280; }
+.meter-bar-wrap { flex: 1; margin: 0 1rem; height: 6px; background: #e5e7eb; border-radius: 3px; overflow: hidden; }
+.meter-bar-fill { height: 100%; border-radius: 3px; transition: width 1s ease; }
+.meter-val { font-size: 0.8rem; font-weight: 700; width: 40px; text-align: right; }
+.tip-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+.tip-card {
+    background: #ffffff;
+    border: 1px solid rgba(59,125,245,0.12);
+    border-radius: 14px;
+    padding: 1.2rem;
+    box-shadow: 0 2px 6px rgba(59,125,245,0.05);
+}
+.tip-card-icon { font-size: 1.5rem; margin-bottom: 0.6rem; }
+.tip-card-title { font-weight: 700; font-size: 0.9rem; margin-bottom: 0.4rem; color: #111827; }
+.tip-card-text { font-size: 0.82rem; color: #6b7280; line-height: 1.5; }
+.action-buttons { display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 2rem; }
+.btn-primary-res {
+    background: linear-gradient(135deg, #4f8ef7, #7c3aed);
+    border: none; color: white; border-radius: 12px;
+    padding: 12px 28px; font-weight: 700; cursor: pointer; transition: all 0.3s;
+    text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem;
+}
+.btn-primary-res:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(79,142,247,0.4); color: white; }
+.btn-secondary-res {
+    background: #f3f4f6; border: 1px solid #d1d5db;
+    color: #374151; border-radius: 12px; padding: 12px 28px; font-weight: 600;
+    cursor: pointer; transition: all 0.2s; text-decoration: none;
+    display: inline-flex; align-items: center; gap: 0.5rem;
+}
+.btn-secondary-res:hover { background: #e5e7eb; color: #111827; }
+@media(max-width:768px) {
+    .result-hero { grid-template-columns: 1fr; }
+    .stat-cards { grid-template-columns: repeat(2,1fr); }
+    .analysis-grid { grid-template-columns: 1fr; }
+}
+</style>
+
+<div class="result-page">
+    <!-- BACK BUTTON -->
+    <div style="margin-bottom:1.5rem;">
+        <a href="/dashboard" style="display:inline-flex;align-items:center;gap:0.4rem;font-size:0.82rem;font-weight:600;color:#6b7280;background:#f3f4f6;border:1px solid #d1d5db;border-radius:8px;padding:6px 14px;text-decoration:none;transition:all 0.2s;">
+            <i class="fas fa-arrow-left"></i> Back to Dashboard
+        </a>
+    </div>
+
+    <!-- HERO -->
+    <div class="result-hero">
+        <div class="score-circle-wrap">
+            <svg class="score-circle-svg" viewBox="0 0 160 160">
+                <circle cx="80" cy="80" r="65" fill="none" stroke="rgba(79,142,247,0.1)" stroke-width="12"/>
+                <circle cx="80" cy="80" r="65" fill="none"
+                    stroke="url(#scoreGrad)"
+                    stroke-width="12"
+                    stroke-linecap="round"
+                    stroke-dasharray="{{ (avg_score / 100) * 408.4 }} 408.4"
+                    stroke-dashoffset="102.1"
+                    id="scoreArc"
+                    style="transition: stroke-dasharray 1.5s ease;"/>
+                <defs>
+                    <linearGradient id="scoreGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" style="stop-color:#4f8ef7"/>
+                        <stop offset="100%" style="stop-color:#7c3aed"/>
+                    </linearGradient>
+                </defs>
+                <text x="80" y="72" text-anchor="middle" fill="#111827" font-size="28" font-weight="800" font-family="Inter">{{ avg_score }}</text>
+                <text x="80" y="92" text-anchor="middle" fill="#6b7280" font-size="12" font-family="Inter">out of 100</text>
+            </svg>
+            <div class="score-center-text">
+                <div class="grade-badge" style="background:{{ grade_color }};">{{ grade }}</div>
+                <div style="font-size:0.85rem; color:#8899bb; margin-top:0.4rem;">{{ grade_msg }}</div>
+            </div>
+        </div>
+
+        <div class="hero-info">
+            <div>
+                <div style="margin-bottom:0.5rem;"><span class="badge-role">{{ role }}</span></div>
+                <div class="hero-title-res">Interview Complete!</div>
+                <div class="hero-subtitle">Here's your detailed performance analysis</div>
+            </div>
+            <div class="stat-cards">
+                <div class="stat-card">
+                    <div class="stat-card-val" style="color:#4f8ef7">{{ results|length }}</div>
+                    <div class="stat-card-lbl">Questions</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-val" style="color:#22d3a5">{{ total_score }}</div>
+                    <div class="stat-card-lbl">Total Score</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-val" style="color:#f59e0b">{{ total_fillers }}</div>
+                    <div class="stat-card-lbl">Filler Words</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-val" style="color:#a78bfa">{{ avg_words }}</div>
+                    <div class="stat-card-lbl">Avg Words/Q</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- QUESTION TABLE -->
+    <div class="section-head"><i class="fas fa-list-ol" style="color:#4f8ef7"></i>Question-by-Question Breakdown</div>
+    <div class="q-table-wrap mb-5">
+        <table class="q-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Question</th>
+                    <th>Your Answer</th>
+                    <th>Score</th>
+                    <th>Status</th>
+                    <th>Fillers</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in results %}
+                {% set q = q_map.get(r.id) %}
+                {% set missing = (r.missing_points | from_json) if r.missing_points else [] %}
+                {% if r.score >= 75 %}
+                    {% set row_color = '#22d3a5' %}
+                    {% set status_class = 'status-excellent' %}
+                {% elif r.score >= 55 %}
+                    {% set row_color = '#4f8ef7' %}
+                    {% set status_class = 'status-good' %}
+                {% elif r.score >= 35 %}
+                    {% set row_color = '#f59e0b' %}
+                    {% set status_class = 'status-partial' %}
+                {% elif r.score > 0 %}
+                    {% set row_color = '#ef4444' %}
+                    {% set status_class = 'status-needs' %}
+                {% else %}
+                    {% set row_color = '#8899bb' %}
+                    {% set status_class = 'status-skipped' %}
+                {% endif %}
+                <tr class="q-row" style="--row-color: {{ row_color }}">
+                    <td><div class="q-num">{{ loop.index }}</div></td>
+                    <td>
+                        {% if q %}
+                        <div class="q-text-snippet" title="{{ q.question }}">{{ q.question }}</div>
+                        {% else %}
+                        <span style="color:#8899bb">—</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="q-answer-snippet" title="{{ r.answer }}">
+                            {% if r.answer %}{{ r.answer[:80] }}{% if r.answer|length > 80 %}...{% endif %}{% else %}<span style="color:#8899bb">Skipped</span>{% endif %}
+                        </div>
+                    </td>
+                    <td>
+                        <div class="score-bar-wrap">
+                            <div class="score-bar-bg">
+                                <div class="score-bar-inner" style="width:{{ r.score }}%; background:{{ row_color }};"></div>
+                            </div>
+                            <div class="score-label" style="color:{{ row_color }}">{{ r.score }}%</div>
+                        </div>
+                    </td>
+                    <td><span class="status-badge {{ status_class }}">{{ r.status }}</span></td>
+                    <td>
+                        <span style="color: {% if r.filler_count > 3 %}#ef4444{% elif r.filler_count > 0 %}#f59e0b{% else %}#22d3a5{% endif %}; font-weight:700; font-size:0.85rem;">
+                            {{ r.filler_count }}
+                        </span>
+                    </td>
+                </tr>
+                {% if missing and r.status != 'Skipped' and r.status != 'Excellent' %}
+                <tr class="q-missing-row">
+                    <td colspan="6">
+                        <div class="q-missing-title"><i class="fas fa-lightbulb"></i> You missed mentioning</div>
+                        {% for m in missing %}<span class="q-missing-chip">{{ m }}</span>{% endfor %}
+                    </td>
+                </tr>
+                {% endif %}
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- ANALYSIS GRID -->
+    <div class="section-head"><i class="fas fa-chart-pie" style="color:#7c3aed"></i>Performance Analysis</div>
+    <div class="analysis-grid">
+        <!-- Communication Analysis -->
+        <div class="analysis-card">
+            <div class="analysis-card-title"><i class="fas fa-comments" style="color:#4f8ef7"></i>Communication Skills</div>
+            {% set filler_score = [0, 100 - (total_fillers * 5)]|max %}
+            {% set words_score = [0, [100, avg_words * 2]|min]|max %}
+            <div class="meter-row">
+                <span class="meter-label">Vocabulary</span>
+                <div class="meter-bar-wrap"><div class="meter-bar-fill" style="width:{{ words_score }}%;background:linear-gradient(90deg,#4f8ef7,#7c3aed)"></div></div>
+                <span class="meter-val" style="color:#4f8ef7">{{ words_score }}%</span>
+            </div>
+            <div class="meter-row">
+                <span class="meter-label">Filler-Free Speech</span>
+                <div class="meter-bar-wrap"><div class="meter-bar-fill" style="width:{{ filler_score }}%;background:linear-gradient(90deg,#22d3a5,#4f8ef7)"></div></div>
+                <span class="meter-val" style="color:#22d3a5">{{ filler_score }}%</span>
+            </div>
+            <div class="meter-row">
+                <span class="meter-label">Answer Completeness</span>
+                <div class="meter-bar-wrap"><div class="meter-bar-fill" style="width:{{ avg_score }}%;background:linear-gradient(90deg,#f59e0b,#ef4444)"></div></div>
+                <span class="meter-val" style="color:#f59e0b">{{ avg_score }}%</span>
+            </div>
+            <div style="margin-top:1rem;padding:0.8rem;background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;font-size:0.82rem;color:#374151;">
+                {% if total_fillers > 10 %}
+                ⚠️ You used {{ total_fillers }} filler words. Try pausing silently instead of saying "um" or "uh".
+                {% elif total_fillers > 4 %}
+                🟡 {{ total_fillers }} filler words detected. Practice speaking more deliberately.
+                {% else %}
+                ✅ Great job keeping filler words minimal!
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Body Language (from localStorage via JS) -->
+        <div class="analysis-card">
+            <div class="analysis-card-title"><i class="fas fa-eye" style="color:#22d3a5"></i>Body Language Analysis</div>
+            <div class="meter-row">
+                <span class="meter-label">Eye Contact</span>
+                <div class="meter-bar-wrap"><div class="meter-bar-fill" id="eyeMeter" style="width:0%;background:linear-gradient(90deg,#22d3a5,#4f8ef7)"></div></div>
+                <span class="meter-val" id="eyeMeterVal" style="color:#22d3a5">—</span>
+            </div>
+            <div class="meter-row">
+                <span class="meter-label">On-Camera Presence</span>
+                <div class="meter-bar-wrap"><div class="meter-bar-fill" id="presenceMeter" style="width:0%;background:linear-gradient(90deg,#7c3aed,#4f8ef7)"></div></div>
+                <span class="meter-val" id="presenceMeterVal" style="color:#7c3aed">—</span>
+            </div>
+            <div class="meter-row">
+                <span class="meter-label">Posture Consistency</span>
+                <div class="meter-bar-wrap"><div class="meter-bar-fill" id="postureMeter" style="width:0%;background:linear-gradient(90deg,#f59e0b,#22d3a5)"></div></div>
+                <span class="meter-val" id="postureMeterVal" style="color:#f59e0b">—</span>
+            </div>
+            <div style="margin-top:1rem;padding:0.8rem;background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;font-size:0.82rem;color:#374151;" id="bodyLangTip">
+                📹 Loading camera analysis...
+            </div>
+        </div>
+    </div>
+
+    <!-- DYNAMIC IMPROVEMENT TIPS -->
+    <div class="section-head"><i class="fas fa-graduation-cap" style="color:#f59e0b"></i>Personalized Improvement Tips</div>
+    <div class="tip-grid" id="tipGrid">
+        <!-- Filled dynamically by JS based on actual performance -->
+    </div>
+
+    <!-- ACTION BUTTONS -->
+    <div class="section-head"><i class="fas fa-redo" style="color:#4f8ef7"></i>What's Next</div>
+    <div class="action-buttons">
+        <a href="/interview/{{ role | urlencode }}" class="btn-primary-res">
+            <i class="fas fa-redo"></i> Retry This Role
+        </a>
+        <a href="/dashboard" class="btn-secondary-res">
+            <i class="fas fa-th-large"></i> Change Role
+        </a>
+        <button class="btn-secondary-res" onclick="window.print()">
+            <i class="fas fa-download"></i> Download Report
+        </button>
+    </div>
+</div>
+
+<script>
+var AVG_SCORE     = {{ avg_score }};
+var TOTAL_FILLERS = {{ total_fillers }};
+var AVG_WORDS     = {{ avg_words }};
+var ROLE_NAME     = {{ role | tojson }};
+var RESULTS = [{% for r in results %}{score:{{ r.score }},status:{{ r.status | tojson }},fillers:{{ r.filler_count }},words:{{ r.word_count }}}{% if not loop.last %},{% endif %}{% endfor %}];
+
+function setMeter(barId, valId, val, color) {
+    var bar = document.getElementById(barId);
+    var lbl = document.getElementById(valId);
+    if (!bar || !lbl) return;
+    bar.style.width = val + '%';
+    lbl.textContent = val + '%';
+    lbl.style.color = color;
+}
+
+window.addEventListener('load', function() {
+    // ── Load camera data saved by MediaPipe during interview ─────────────────
+    var eyePct = 0, posturePct = 0, onCamPct = 0, highMovePct = 0, camOK = false;
+    try {
+        for (var i = 0; i < localStorage.length; i++) {
+            var k = localStorage.key(i);
+            if (k && k.indexOf('skillcheck_session_') === 0) {
+                var d = JSON.parse(localStorage.getItem(k));
+                if (d && typeof d.eyeScore !== 'undefined') {
+                    eyePct      = parseInt(d.eyeScore)        || 0;
+                    posturePct  = parseInt(d.postureScore)    || 0;
+                    onCamPct    = parseInt(d.onCameraPercent) || 0;
+                    highMovePct = parseInt(d.highMovePct)     || 0;
+                    camOK = true;
+                    localStorage.removeItem(k);
+                    break;
+                }
+            }
+        }
+    } catch(e) {}
+
+    setTimeout(function() {
+        // ── Body language meters ──────────────────────────────────────────────
+        if (camOK) {
+            setMeter('eyeMeter',      'eyeMeterVal',      eyePct,
+                eyePct >= 65 ? '#22d3a5' : eyePct >= 35 ? '#f59e0b' : '#ef4444');
+            setMeter('presenceMeter', 'presenceMeterVal', onCamPct,
+                onCamPct >= 70 ? '#7c3aed' : onCamPct >= 40 ? '#f59e0b' : '#ef4444');
+            setMeter('postureMeter',  'postureMeterVal',  posturePct,
+                posturePct >= 65 ? '#22d3a5' : posturePct >= 40 ? '#f59e0b' : '#ef4444');
+
+            var bodyTip = '';
+            if (eyePct >= 65 && onCamPct >= 70) {
+                bodyTip = '✅ Excellent eye contact and camera presence!';
+            } else if (eyePct >= 40) {
+                bodyTip = '🟡 Decent eye contact but inconsistent. Look directly at the camera lens — not your own image.';
+            } else if (!camOK || eyePct === 0) {
+                bodyTip = '⚠️ Eye tracking not available (MediaPipe did not load). Make sure internet is on next time.';
+            } else {
+                bodyTip = '⚠️ Low eye contact (' + eyePct + '%). Place a sticker dot next to your camera lens as a target. Aim for 70%+ contact.';
+            }
+            if (posturePct < 50) bodyTip += ' Also: sit up straight — your face was too low in frame.';
+            if (highMovePct > 30) bodyTip += ' Reduce unnecessary head/body movement during answers.';
+            document.getElementById('bodyLangTip').textContent = bodyTip;
+        } else {
+            document.getElementById('bodyLangTip').textContent = '📹 No camera data. Make sure camera permission is allowed and try again.';
+            setMeter('eyeMeter',      'eyeMeterVal',      0, '#8899bb');
+            setMeter('presenceMeter', 'presenceMeterVal', 0, '#8899bb');
+            setMeter('postureMeter',  'postureMeterVal',  0, '#8899bb');
+        }
+
+        // ── Build personalized tips ───────────────────────────────────────────
+        var tips = [];
+        var skipped = 0;
+        var answered = [];
+        RESULTS.forEach(function(x) {
+            if (x.status === 'Skipped') skipped++;
+            else answered.push(x);
+        });
+        var avgAns = answered.length > 0
+            ? Math.round(answered.reduce(function(s,x){return s+x.score;},0) / answered.length) : 0;
+
+        // 1. Score
+        if (AVG_SCORE < 15) {
+            tips.push({i:'📖', t:'Study core concepts first',
+                d:'Your average score was ' + AVG_SCORE + '%. Study model answers — notice the depth and structure. Practice explaining each concept out loud in your own words until it feels natural.'});
+        } else if (AVG_SCORE < 40) {
+            tips.push({i:'🎯', t:'Add depth to your answers',
+                d:'You scored ' + AVG_SCORE + '% average. Basic understanding is there. Now add: technical terminology, how things work internally, and a real project example per answer.'});
+        } else if (AVG_SCORE < 65) {
+            tips.push({i:'📈', t:'Good — push for 70%+',
+                d:'Scoring ' + AVG_SCORE + '% is solid. To score higher: be more precise with technical terms and always close with "In practice, I used this when..."'});
+        } else {
+            tips.push({i:'🏆', t:'Strong technical knowledge!',
+                d:'Scoring ' + AVG_SCORE + '% is excellent. Focus on delivery now — confident tone, clear structure (Define → Explain → Example), and concise answers under 2 minutes.'});
+        }
+
+        // 2. Skipped
+        if (skipped >= 5) {
+            tips.push({i:'⏭️', t:'You skipped ' + skipped + ' out of 10 questions',
+                d:'In a real interview, skipping is not possible. Even a wrong attempt is better than silence. Use: "My understanding of this is..." to start any answer — it buys time and shows effort.'});
+        } else if (skipped > 0) {
+            tips.push({i:'⏭️', t:skipped + ' question' + (skipped>1?'s':'') + ' skipped',
+                d:'Next time attempt every question. Say "I am not fully certain but I believe..." Interviewers respect honesty with effort far more than silence.'});
+        }
+
+        // 3. Filler words
+        if (TOTAL_FILLERS > 10) {
+            tips.push({i:'🗣️', t:TOTAL_FILLERS + ' filler words — needs work',
+                d:'"Um", "uh", "basically", "you know" make you sound unconfident. Replace with a 2-second silent pause. It feels awkward but sounds professional. Record yourself daily and count fillers.'});
+        } else if (TOTAL_FILLERS > 3) {
+            tips.push({i:'🗣️', t:'Reduce filler words (' + TOTAL_FILLERS + ' used)',
+                d:'You used ' + TOTAL_FILLERS + ' fillers. Practice speaking in complete sentences with deliberate pauses. Read one paragraph aloud every day — focus on stopping instead of filling gaps.'});
+        } else {
+            tips.push({i:'✅', t:'Excellent speech clarity!',
+                d:'Only ' + TOTAL_FILLERS + ' filler word' + (TOTAL_FILLERS===1?'':'s') + ' in the whole interview. Clean speech signals expertise and confidence to interviewers — keep this up.'});
+        }
+
+        // 4. Answer length
+        if (AVG_WORDS < 15) {
+            tips.push({i:'📏', t:'Answers too short (' + AVG_WORDS + ' words avg)',
+                d:'Aim for 80-150 words per answer. Every answer should: 1) Define the concept, 2) Explain how it works, 3) Give a real example. Short answers suggest you don't know enough.'});
+        } else if (AVG_WORDS < 50) {
+            tips.push({i:'📏', t:'Expand your answers (' + AVG_WORDS + ' words avg)',
+                d:'You're a bit short. After your definition, add "For example, in my project I used this when..." — showing applied knowledge is what separates good candidates.'});
+        } else if (AVG_WORDS > 180) {
+            tips.push({i:'✂️', t:'Keep answers concise (' + AVG_WORDS + ' words avg)',
+                d:'Very long answers lose interviewers after ~2 minutes. Make your main point first, then support it briefly. Let the interviewer ask follow-up questions.'});
+        } else {
+            tips.push({i:'📏', t:'Good answer length (' + AVG_WORDS + ' words avg)',
+                d:'You're in the ideal range (80-150 words). Keep this balance — enough depth to show knowledge without overloading the interviewer.'});
+        }
+
+        // 5. Eye contact (real MediaPipe data)
+        if (camOK) {
+            if (eyePct < 30) {
+                tips.push({i:'👁️', t:'Very low eye contact (' + eyePct + '%)',
+                    d:'Only ' + eyePct + '% of the time you were looking at the camera. Place a small sticker dot right next to your camera lens and focus on it. This single habit makes you look confident and engaged.'});
+            } else if (eyePct < 55) {
+                tips.push({i:'👁️', t:'Inconsistent eye contact (' + eyePct + '%)',
+                    d:'You made eye contact ' + eyePct + '% of the time. Aim for 70%+. When you start answering, look at the camera — glance away briefly when thinking, then return. This feels natural and confident.'});
+            } else {
+                tips.push({i:'👁️', t:'Good eye contact (' + eyePct + '%)',
+                    d:'Maintaining ' + eyePct + '% eye contact is great! Interviewers interpret this as confidence and trustworthiness. Keep this as your default — it's one of the most powerful non-verbal signals.'});
+            }
+
+            // 6. Posture
+            if (posturePct < 35) {
+                tips.push({i:'🪑', t:'Poor posture detected (' + posturePct + '%)',
+                    d:'Your face appeared low in frame most of the time, suggesting slouching. Sit up straight, shoulders back, slight forward lean. Good posture also improves your breathing and makes your voice stronger.'});
+            } else if (posturePct < 60) {
+                tips.push({i:'🪑', t:'Posture needs improvement (' + posturePct + '%)',
+                    d:'You sat straight only ' + posturePct + '% of the time. Place your laptop/monitor slightly higher so it forces you to sit upright. Good posture projects energy and confidence.'});
+            } else {
+                tips.push({i:'🪑', t:'Good posture (' + posturePct + '%)',
+                    d:'Sitting straight ' + posturePct + '% of the time is solid. Consistent upright posture throughout the interview signals professionalism and confidence to the interviewer.'});
+            }
+
+            // 7. Movement
+            if (highMovePct > 35) {
+                tips.push({i:'🤝', t:'Too much head/body movement (' + highMovePct + '%)',
+                    d:'Excessive movement is distracting in video interviews. Keep your upper body mostly still — small natural gestures with hands are fine but avoid rocking, swaying, or fidgeting. Practice staying stable.'});
+            } else if (highMovePct < 10) {
+                tips.push({i:'🤝', t:'Natural, controlled movement',
+                    d:'Your body movement was minimal and controlled — this reads as calm and confident on camera. In-person interviews allow more gesture; on video, less movement is better.'});
+            }
+
+            // 8. On-camera presence
+            if (onCamPct < 60) {
+                tips.push({i:'📹', t:'Off-camera too often (' + onCamPct + '% on-camera)',
+                    d:'Your face was out of frame ' + (100-onCamPct) + '% of the time. In a video interview this breaks connection with the interviewer. Position yourself so your face is always centered and clearly visible.'});
+            }
+        }
+
+        // 9. English structure
+        if (avgAns < 50) {
+            tips.push({i:'📐', t:'Structure every answer',
+                d:'For technical questions: Define → Explain → Example. For behavioral: Situation → Task → Action → Result. Structured answers score 20-30% higher because they're easy to follow and show clear thinking.'});
+        }
+
+        // 10. Confidence language
+        if (AVG_SCORE < 35) {
+            tips.push({i:'💪', t:'Use confident language',
+                d:'Avoid: "I think maybe...", "I am not sure but...", "kind of like...". Use: "The key concept is...", "In my experience...", "A clear example is...". Confident language comes from practice — do mock interviews daily.'});
+        }
+
+        // 11. English improvement
+        tips.push({i:'🇬🇧', t:'English for technical interviews',
+            d:'Use precise terms: "implement" not "make", "optimize" not "make faster", "initialize" not "set up". Interviewers judge vocabulary as a proxy for technical depth. Read tech blogs and listen to engineering podcasts daily.'});
+
+        // 12. Role-specific
+        tips.push({i:'📚', t:ROLE_NAME + ' — what interviewers test',
+            d:'For ' + ROLE_NAME + ' interviews: explain the WHY behind every concept, mention real projects, and compare alternatives (e.g. "I chose X over Y because..."). This shows senior-level thinking.'});
+
+        // Render tips
+        var grid = document.getElementById('tipGrid');
+        if (!grid) return;
+        grid.innerHTML = '';
+        tips.forEach(function(t) {
+            var card = document.createElement('div');
+            card.className = 'tip-card';
+            card.innerHTML = '<div class="tip-card-icon">' + t.i + '</div>'
+                + '<div class="tip-card-title">' + t.t + '</div>'
+                + '<div class="tip-card-text">' + t.d + '</div>';
+            grid.appendChild(card);
+        });
+
+    }, 400);
+});
+</script>
+
+<style>
+@media print {
+    .navbar-skillcheck, .action-buttons { display: none !important; }
+    body { background: white !important; color: black !important; }
+    .result-page { color: black; }
+    .analysis-card, .q-table td, .stat-card { background: #f5f5f5 !important; border-color: #ddd !important; }
+    .q-row td { background: #f5f5f5 !important; }
+}
+</style>
+{% endblock %}

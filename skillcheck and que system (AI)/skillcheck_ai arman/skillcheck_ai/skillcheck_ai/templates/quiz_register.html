@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+.qauth-wrap { min-height: calc(100vh - 58px); display: flex; align-items: center; justify-content: center; padding: 2rem; }
+.qauth-card { width: 100%; max-width: 420px; background: #ffffff; border: 1px solid rgba(109,40,217,.2); border-radius: 22px; padding: 2.5rem; box-shadow: 0 10px 40px rgba(109,40,217,.08); }
+.qauth-logo { text-align: center; margin-bottom: 2rem; }
+.qauth-icon { font-size: 3rem; display: block; margin-bottom: .5rem; }
+.qauth-title { font-family: 'Orbitron', sans-serif; font-size: 1.2rem; font-weight: 800; background: linear-gradient(135deg, #6d28d9, var(--amber)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; letter-spacing: .04em; }
+.qauth-sub { color: var(--text-dim); font-size: .82rem; margin-top: .3rem; }
+.qauth-lbl { font-size: .72rem; font-weight: 600; color: var(--text-dim); text-transform: uppercase; letter-spacing: .1em; margin-bottom: .4rem; font-family: 'Orbitron', sans-serif; }
+.qauth-inp { width: 100%; background: rgba(109,40,217,.05); border: 1px solid rgba(109,40,217,.25); border-radius: 10px; color: var(--text); padding: .8rem 1rem; font-size: .9rem; font-family: 'Inter', sans-serif; transition: border-color .3s; margin-bottom: 1.1rem; }
+.qauth-inp:focus { outline: none; border-color: #6d28d9; background: rgba(109,40,217,.08); box-shadow: 0 0 0 3px rgba(109,40,217,.12); }
+.qauth-inp::placeholder { color: var(--text-dim); }
+.qauth-btn { width: 100%; background: linear-gradient(135deg, #6d28d9, var(--amber)); border: none; color: white; border-radius: 11px; padding: 12px; font-family: 'Orbitron', sans-serif; font-weight: 700; font-size: .82rem; letter-spacing: .06em; cursor: pointer; transition: all .3s; margin-top: .25rem; }
+.qauth-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(109,40,217,.3); }
+.qauth-footer { text-align: center; margin-top: 1.25rem; font-size: .83rem; color: var(--text-dim); }
+.qauth-footer a { color: #6d28d9; }
+.qauth-error { background: rgba(220,38,38,.06); border: 1px solid rgba(220,38,38,.25); color: #b91c1c; border-radius: 9px; padding: .7rem 1rem; font-size: .82rem; margin-bottom: 1rem; }
+</style>
+<div class="qauth-wrap">
+    <div class="qauth-card">
+        <div class="qauth-logo">
+            <span class="qauth-icon">⚡</span>
+            <div class="qauth-title">QUIZ BATTLE ARENA</div>
+            <div class="qauth-sub">Create your battle account</div>
+        </div>
+        {% if error %}<div class="qauth-error"><i class="fas fa-exclamation-circle" style="margin-right:.4rem"></i>{{ error }}</div>{% endif %}
+        <form method="POST">
+            <div class="qauth-lbl">Full Name</div>
+            <input name="name" class="qauth-inp" type="text" placeholder="Your name" required>
+            <div class="qauth-lbl">Email</div>
+            <input name="email" class="qauth-inp" type="email" placeholder="you@example.com" required>
+            <div class="qauth-lbl">Password</div>
+            <input name="password" class="qauth-inp" type="password" placeholder="••••••••" required>
+            <button class="qauth-btn" type="submit"><i class="fas fa-gamepad" style="margin-right:.4rem"></i>CREATE BATTLE ACCOUNT</button>
+        </form>
+        <div class="qauth-footer">Already have an account? <a href="/quiz/login">Sign in</a></div>
+        <div class="qauth-footer" style="margin-top:.6rem"><a href="/" style="color:var(--text-dim)"><i class="fas fa-arrow-left" style="margin-right:.3rem"></i>Back to Home</a></div>
+    </div>
+</div>
+{% endblock %}
