@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: career-bridge-system
+    runtime: python
+    plan: standard
+    rootDir: skillcheck and que system (AI)/skillcheck_ai arman/skillcheck_ai/skillcheck_ai
+    buildCommand: "pip install -r requirements.txt && python -m spacy download en_core_web_sm"
+    startCommand: "gunicorn app:app"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.10.13
+      - key: SECRET_KEY
+        generateValue: true
